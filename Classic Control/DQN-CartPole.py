@@ -14,7 +14,7 @@ render = False
 
 train = True
 if(len(sys.argv) > 1):
-	if sys.argv[1] == 'test':
+	if sys.argv[1].lower() == 'test':
 		train = False
 
 
