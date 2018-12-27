@@ -67,7 +67,7 @@ class DQN:
         samples = random.sample(self.memory, self.batch_size)
         for sample in samples:
             curr_obs, action, reward, next_obs, done = sample
-            target = self.target_model.predict(curr_obs)
+            target = self.model.predict(curr_obs)
             if done:
                 target[0][action] = reward
             else:   
