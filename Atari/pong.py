@@ -21,8 +21,6 @@ TARGET_NETWORK_WEIGHTS_SAVE = ENV_NAME + '-TARGET-SAVED-WEIGHTS.h5'
 CHECKPOINT_PARAMS_SAVE = ENV_NAME + '-CHECKPOINT-PARAMS.npz'
 
 FRAME_BUFFER_SIZE = 4
-EPISODE_START = 0
-
 EPISODES = 100
 GAMMA = 0.99
 ALPHA = 0.00025
@@ -75,6 +73,7 @@ class Learner:
 		self.epsilon_min = EXPLORATION_MIN
 		self.epsilon_decay = EXPLORATION_DECAY
 
+		self.ep_start = 0
 		self.training_freq = TRAINING_FREQUENCY
 		self.replay_start = REPLAY_START
 		self.model_save_freq = MODEL_SAVE_FREQUENCY
@@ -99,15 +98,24 @@ class Learner:
 		return model
 
 	def load_checkpoint(self):
+		print('in chkpoint load func')
 		if Path(LOCAL_NETWORK_WEIGHTS_SAVE).exists():
 			self.local_model.load_weights(LOCAL_NETWORK_WEIGHTS_SAVE)
+			print('local model loaded')
+
 		if Path(TARGET_NETWORK_WEIGHTS_SAVE).exists():
 			self.target_model.load_weights(TARGET_NETWORK_WEIGHTS_SAVE)
+			print('target model loaded')
+
 		if Path(CHECKPOINT_PARAMS_SAVE).exists():
 			params = np.load(CHECKPOINT_PARAMS_SAVE)
-			EPISODE_START = params['episode']
+			self.ep_start = params['episode']
 			self.epsilon = params['epsilon']
+			print('EPISODE_START and epsilon values loaded')
+			print(self.ep_start)
+			print(self.epsilon)
 			params.close()
+		input()
 
 	def save_checkpoint(self):
 		self.local_model.save_weights(LOCAL_NETWORK_WEIGHTS_SAVE)
@@ -203,9 +211,9 @@ agent = Learner(env=env)
 
 global_step = 0
 
-print('Resuming from episode: ',EPISODE_START)
+print('Resuming from episode: ',agent.ep_start)
 
-for ep in range(EPISODE_START,EPISODES):
+for ep in range(agent.ep_start,EPISODES):
 	curr_obs = env.reset()
 	curr_obs = curr_obs.__array__(dtype=np.float32)
 	step = 0
