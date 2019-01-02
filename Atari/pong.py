@@ -111,11 +111,7 @@ class Learner:
 			params = np.load(CHECKPOINT_PARAMS_SAVE)
 			self.ep_start = params['episode']
 			self.epsilon = params['epsilon']
-			print('EPISODE_START and epsilon values loaded')
-			print(self.ep_start)
-			print(self.epsilon)
 			params.close()
-		input()
 
 	def save_checkpoint(self):
 		self.local_model.save_weights(LOCAL_NETWORK_WEIGHTS_SAVE)
