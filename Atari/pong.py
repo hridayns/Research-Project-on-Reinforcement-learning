@@ -3,18 +3,17 @@ import gym
 import cv2 as cv
 import random
 import tensorflow as tf
+import arg_parser
 
 from gym import spaces
 from collections import deque
 from pathlib import Path
 from FrameStacker import FrameStack
-from sys import getsizeof
+# from sys import getsizeof
 
 from tensorflow.python.keras.models import Sequential,load_model
 from tensorflow.python.keras.layers import Dense,Dropout,Conv2D,Flatten
 from tensorflow.python.keras.optimizers import RMSprop
-
-
 
 ENV_NAME = 'Pong-v0'
 LOCAL_NETWORK_WEIGHTS_SAVE = ENV_NAME + '-LOCAL-SAVED-WEIGHTS.h5'
@@ -26,6 +25,7 @@ EPISODE_START = 0
 
 EPISODES = 100
 GAMMA = 0.99
+ALPHA = 0.00025
 REPLAY_MEM_SIZE = 50000
 BATCH_SIZE = 32
 
@@ -38,9 +38,25 @@ TRAINING_FREQUENCY = 4
 TARGET_NETWORK_UPDATE_FREQUENCY = 40000
 MODEL_SAVE_FREQUENCY = 100
 REPLAY_START = 50000
-RENDER_FREQUENCY = 10
 
 EXPLORATION_TEST = 0.02
+
+args = arg_parser.parse()
+
+if args.episodes:
+	EPISODES = args.episodes
+if args.buffer_size:
+	REPLAY_MEM_SIZE = args.buffer_size
+if args.gamma:
+	GAMMA = args.gamma
+if args.lr:
+	ALPHA = args.lr
+if args.batch_size:
+	BATCH_SIZE = args.batch_size
+if args.test:
+	#implement agent playing game using learned parameters
+	print('Testing agent...')
+
 
 class Learner:
 	def __init__(self,env):
@@ -54,6 +70,7 @@ class Learner:
 		
 		self.batch_size = BATCH_SIZE
 		self.gamma = GAMMA
+		self.alpha = ALPHA
 		self.epsilon = EXPLORATION_MAX
 		self.epsilon_min = EXPLORATION_MIN
 		self.epsilon_decay = EXPLORATION_DECAY
@@ -78,7 +95,7 @@ class Learner:
 		model.add(Flatten())
 		model.add(Dense(512))
 		model.add(Dense(self.output_dims))
-		model.compile(loss="mean_squared_error",optimizer=RMSprop(lr=0.00025,rho=0.95,epsilon=0.01),metrics=["accuracy"])
+		model.compile(loss="mean_squared_error",optimizer=RMSprop(lr=self.alpha,rho=0.95,epsilon=0.01),metrics=["accuracy"])
 		return model
 
 	def load_checkpoint(self):
@@ -193,13 +210,14 @@ for ep in range(EPISODE_START,EPISODES):
 	curr_obs = curr_obs.__array__(dtype=np.float32)
 	step = 0
 	total_r = np.int8(0)
-	# render = False
-	# if ep % RENDER_FREQUENCY == 0:
-	# 	render = True
+	render = False
+	if args.render:
+		if ep % args.render_freq == 0:
+			render = True
 	while True:
-		# if render:
+		if render:
 			# agent.render_frame(curr_obs)
-			# env.render()
+			env.render()
 		global_step += 1
 		step += 1
 		action = agent.act(curr_obs)
