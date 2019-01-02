@@ -225,5 +225,3 @@ for ep in range(EPISODE_START,EPISODES):
 
 	np.savez(CHECKPOINT_PARAMS_SAVE,episode=ep,epsilon=agent.epsilon)
 	print('Total Reward for episode {}: {}'.format(ep,total_r))
-
-
