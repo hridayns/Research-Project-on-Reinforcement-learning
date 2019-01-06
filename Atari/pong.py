@@ -8,23 +8,22 @@ import arg_parser
 from gym import spaces
 from collections import deque
 from pathlib import Path
-from FrameStacker import FrameStack
-# from sys import getsizeof
+from gymWrapper import GymAtari
 
 from tensorflow.python.keras.models import Sequential,load_model
 from tensorflow.python.keras.layers import Dense,Dropout,Conv2D,Flatten
 from tensorflow.python.keras.optimizers import RMSprop
 
-ENV_NAME = 'Pong-v0'
-LOCAL_NETWORK_WEIGHTS_SAVE = ENV_NAME + '-LOCAL-SAVED-WEIGHTS.h5'
-TARGET_NETWORK_WEIGHTS_SAVE = ENV_NAME + '-TARGET-SAVED-WEIGHTS.h5'
-CHECKPOINT_PARAMS_SAVE = ENV_NAME + '-CHECKPOINT-PARAMS.npz'
+ENV_NAME = 'PongDeterministic-v4'
+LOCAL_NETWORK_WEIGHTS_SAVE = ENV_NAME + '-LOCAL-WEIGHTS.h5'
+TARGET_NETWORK_WEIGHTS_SAVE = ENV_NAME + '-TARGET-WEIGHTS.h5'
+CHECKPOINT_PARAMS_SAVE = ENV_NAME + '-CHECKPOINT.npz'
 
 FRAME_BUFFER_SIZE = 4
-EPISODES = 100
+EPISODES = 1000
 GAMMA = 0.99
 ALPHA = 0.00025
-REPLAY_MEM_SIZE = 50000
+REPLAY_MEM_SIZE = 100000
 BATCH_SIZE = 32
 
 EXPLORATION_MAX = 1.0
@@ -52,9 +51,22 @@ if args.lr:
 if args.batch_size:
 	BATCH_SIZE = args.batch_size
 if args.test:
-	#implement agent playing game using learned parameters
 	print('Testing agent...')
 
+ep_start = 0
+global_step = 0
+EXPLORATION_INIT = 1.0
+'''
+NOTE : To really save the MODEL and RESUME from where you left off, the REPLAY BUFFER state has to be saved as well. Think about it. Saving
+EPSILON value seems TRIVIAL now.
+'''
+if Path(CHECKPOINT_PARAMS_SAVE).exists():
+	params = np.load(CHECKPOINT_PARAMS_SAVE)
+	ep_start = params['episode']
+	global_step = params['global_step']
+	# EXPLORATION_INIT = params['epsilon']
+	params.close()
+	print('Loaded checkpoint parameters from last run...')
 
 class Learner:
 	def __init__(self,env):
@@ -62,18 +74,16 @@ class Learner:
 
 		self.input_dims = self.env.reset().__array__()[0].shape
 		self.output_dims = self.env.action_space.n
-
 		self.k = FRAME_BUFFER_SIZE
 		self.memory = deque(maxlen=REPLAY_MEM_SIZE)
 		
 		self.batch_size = BATCH_SIZE
 		self.gamma = GAMMA
 		self.alpha = ALPHA
-		self.epsilon = EXPLORATION_MAX
+		self.epsilon = EXPLORATION_INIT
 		self.epsilon_min = EXPLORATION_MIN
 		self.epsilon_decay = EXPLORATION_DECAY
 
-		self.ep_start = 0
 		self.training_freq = TRAINING_FREQUENCY
 		self.replay_start = REPLAY_START
 		self.model_save_freq = MODEL_SAVE_FREQUENCY
@@ -81,10 +91,10 @@ class Learner:
 
 		self.local_model = self.init_model()
 		self.target_model = self.init_model()
+		self.target_train()
 
 		self.load_checkpoint()
 
-		# self.target_train()
 
 	def init_model(self):
 		model = Sequential()
@@ -98,20 +108,20 @@ class Learner:
 		return model
 
 	def load_checkpoint(self):
-		print('in chkpoint load func')
 		if Path(LOCAL_NETWORK_WEIGHTS_SAVE).exists():
 			self.local_model.load_weights(LOCAL_NETWORK_WEIGHTS_SAVE)
-			print('local model loaded')
+			print('Local model loaded...')
 
 		if Path(TARGET_NETWORK_WEIGHTS_SAVE).exists():
 			self.target_model.load_weights(TARGET_NETWORK_WEIGHTS_SAVE)
-			print('target model loaded')
+			print('Target model loaded...')
 
-		if Path(CHECKPOINT_PARAMS_SAVE).exists():
-			params = np.load(CHECKPOINT_PARAMS_SAVE)
-			self.ep_start = params['episode']
-			self.epsilon = params['epsilon']
-			params.close()
+		# if Path(CHECKPOINT_PARAMS_SAVE).exists():
+		# 	params = np.load(CHECKPOINT_PARAMS_SAVE)
+		# 	self.ep_start = params['episode']
+		# 	self.epsilon = params['epsilon']
+		# 	params.close()
+		# 	print('Loaded checkpoint parameters from last run...')
 
 	def save_checkpoint(self):
 		self.local_model.save_weights(LOCAL_NETWORK_WEIGHTS_SAVE)
@@ -230,18 +240,22 @@ def play_test(agent):
 				break
 
 env = gym.make(ENV_NAME)
-env = FrameStack(env,FRAME_BUFFER_SIZE)
+env = GymAtari.wrap(env,FRAME_BUFFER_SIZE)
+
 
 agent = Learner(env=env)
 if args.test:
 	play_test(agent)
 	exit()
 
-global_step = 0
-
-print('Resuming from episode: ',agent.ep_start)
-
-for ep in range(agent.ep_start,EPISODES):
+print('TOTAL EPISODES: {}'.format(EPISODES))
+print('REPLAY BUFFER SIZE: {}'.format(REPLAY_MEM_SIZE))
+print('DISCOUNT FACTOR: {}'.format(GAMMA))
+print('LEARNING RATE: {}'.format(ALPHA))
+print('BATCH SIZE: {}'.format(BATCH_SIZE))
+print('Resuming from episode {} --- Global Timestep: {}... '.format(ep_start,global_step))
+print('-------------------------------------------------------------------------------')
+for ep in range(ep_start,EPISODES):
 	curr_obs = env.reset()
 	curr_obs = curr_obs.__array__(dtype=np.float32)
 	step = 0
@@ -277,5 +291,6 @@ for ep in range(agent.ep_start,EPISODES):
 			env.close()
 			break
 
-	np.savez(CHECKPOINT_PARAMS_SAVE,episode=ep,epsilon=agent.epsilon)
+	np.savez(CHECKPOINT_PARAMS_SAVE,episode=ep,global_step=global_step)#,epsilon=agent.epsilon)
 	print('Total Reward for episode {}: {}'.format(ep,total_r))
+	print('Global Timestep: {}'.format(global_step))
