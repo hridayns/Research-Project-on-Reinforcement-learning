@@ -176,7 +176,11 @@ class Learner:
 		# acc = fit.history["acc"][0]
 		# print('Loss: {}, Acc: {}'.format(loss,acc))
 
-		
+	def move(self,obs):
+		if np.random.random() < EXPLORATION_TEST:
+			return self.env.action_space.sample()
+		q_vals = self.local_model.predict(obs)
+		return np.argmax(q_vals[0])
 
 	def act(self,obs):
 		if np.random.random() < self.epsilon:
@@ -200,10 +204,38 @@ class Learner:
 		cv.imshow('frame', obs[:,:,self.k-1])
 		cv.waitKey(50)
 
+def play_test(agent):
+	env = agent.env
+	for i in range(100):
+		curr_obs = env.reset()
+		curr_obs = curr_obs.__array__(dtype=np.float32)
+		total_r = 0
+		step = 0
+		while True:
+			if args.render:
+				env.render()
+			step += 1
+			action = agent.move(curr_obs)
+
+			next_obs,reward,done,info = env.step(action)
+			next_obs = next_obs.__array__(dtype=np.float32)
+			
+			reward = np.int8(reward)
+			
+			total_r += reward
+
+			curr_obs = next_obs
+			if done:
+				print('Total score: {}'.format(total_r))
+				break
+
 env = gym.make(ENV_NAME)
 env = FrameStack(env,FRAME_BUFFER_SIZE)
 
 agent = Learner(env=env)
+if args.test:
+	play_test(agent)
+	exit()
 
 global_step = 0
 
