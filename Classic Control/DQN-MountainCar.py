@@ -17,10 +17,10 @@ ENV_NAME = 'MountainCar-v0'
 SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
 if not os.path.exists(SAVE_FOLDER):
     os.mkdir(SAVE_FOLDER)
-LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.npz')
-TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.npz')
+LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.h5')
+TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.h5')
 
-EPISODES = 5000
+EPISODES = 2000
 render = False
 training = True
 if(len(sys.argv) > 1):
