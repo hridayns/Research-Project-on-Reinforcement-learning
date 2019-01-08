@@ -6,15 +6,21 @@ from tensorflow.python.keras.layers import Dense, Dropout
 from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.models import load_model
 import sys
+import os
 
+from pathlib import Path
 from collections import deque
 
 
 np.random.seed(42)
-env_name = 'MountainCar-v0'
-local_model_save = env_name + '-DQN-local-network.h5'
-target_model_save = env_name + '-DQN-target-network.h5'
-episodes = 1001
+ENV_NAME = 'MountainCar-v0'
+SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
+if not os.path.exists(SAVE_FOLDER):
+    os.mkdir(SAVE_FOLDER)
+LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.npz')
+TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.npz')
+
+EPISODES = 5000
 render = False
 training = True
 if(len(sys.argv) > 1):
@@ -35,6 +41,8 @@ class DQN:
 
         self.model        = self.create_model()
         self.target_model = self.create_model()
+
+        self.load_model()
 
     def create_model(self):
         model   = Sequential()
@@ -79,30 +87,34 @@ class DQN:
         self.target_model.set_weights(self.model.get_weights())
 
     def save_model(self):
-        self.model.save(local_model_save)
-        self.target_model.save(target_model_save)
+        self.model.save(LOCAL_WEIGHTS_SAVE)
+        self.target_model.save(TARGET_WEIGHTS_SAVE)
     def load_model(self):
-        self.model = load_model(local_model_save)
-        self.target_model = load_model(target_model_save)
+        if Path(LOCAL_WEIGHTS_SAVE).exists():
+            self.model = load_model(LOCAL_WEIGHTS_SAVE)
+        if Path(TARGET_WEIGHTS_SAVE).exists():
+            self.target_model = load_model(TARGET_WEIGHTS_SAVE)
 
 def reshape_input(X):
 	X = X.reshape(-1,X.shape[0])
 	return X
 
 def train():
-    env = gym.make(env_name)
+    env = gym.make(ENV_NAME)
     target_reward = -110
     reward_window = deque(maxlen=100)
     consolidation_counter = 0
 
     dqn_agent = DQN(env=env)
     
-    for ep in range(episodes):
+    for ep in range(EPISODES):
         curr_obs = env.reset()
         curr_obs = reshape_input(curr_obs)
         total_r = 0
         step = 1
         while True:
+            # if ep % 5 == 0:
+            #     env.render()
             action = dqn_agent.act(curr_obs)
             next_obs, reward, done, _ = env.step(action)
             next_obs = reshape_input(next_obs)
@@ -114,6 +126,7 @@ def train():
             dqn_agent.replay()
             step += 1
             if done:
+                # env.close()
                 dqn_agent.target_train()
                 break
         
@@ -126,12 +139,12 @@ def train():
         if avg_reward_window >= target_reward:
             consolidation_counter += 1
             if consolidation_counter >= 5:
-                print('Completed training with avg reward {} over last 100 episodes. Training ran for a total of {} episodes.'.format(avg_reward_window,ep))
+                print('Completed training with avg reward {} over last 100 episodes. Training ran for a total of {} episodes.'.format(avg_reward_window,ep+1))
                 input()
                 return
             else:
                 consolidation_counter = 0
-    print('INCOMPLETE training with avg reward {} over last 100 episodes. Training ran for a total of {} episodes.'.format(avg_reward_window,ep))
+    print('INCOMPLETE training with avg reward {} over last 100 episodes. Training ran for a total of {} episodes.'.format(avg_reward_window,ep+1))
     return
     
 def test():

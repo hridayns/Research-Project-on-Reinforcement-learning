@@ -2,14 +2,21 @@ import gym
 import numpy as np
 import random
 import sys
+import os
 
 from collections import deque
 
 
 np.random.seed(42)
-env_name = 'CartPole-v1'
-saved_params_file = env_name + '-DQN-saved-params.npz'
-episodes = 20
+# random.seed(42)
+ENV_NAME = 'CartPole-v1'
+SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
+if not os.path.exists(SAVE_FOLDER):
+	os.mkdir(SAVE_FOLDER)
+LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.npz')
+TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.npz')
+
+EPISODES = 250
 render = False
 
 train = True
@@ -21,7 +28,7 @@ if(len(sys.argv) > 1):
 class NN:
 	def __init__(self,input_size,output_size):
 		self.hidden_size = 8
-		self.alpha = 1e-2 # learning_rate
+		self.alpha = 1e-3 # learning_rate
 		self.lmbda = 0# regularization factor
 
 		self.W = {
@@ -128,12 +135,18 @@ class DQN:
 		self.model = self.init_NN()
 		self.target_model = self.init_NN()
 
-	def save_model(self,model):
-		np.savez(saved_params_file,W1=model.W['1'],W2=model.W['2'],b1=model.b['1'],b2=model.b['2'])
+	def save_model(self):
+		local_model = self.model
+		target_model = self.target_model
+
+		np.savez(LOCAL_WEIGHTS_SAVE,W1=local_model.W['1'],W2=local_model.W['2'],b1=local_model.b['1'],b2=local_model.b['2'])
+		np.savez(TARGET_WEIGHTS_SAVE,W1=target_model.W['1'],W2=target_model.W['2'],b1=target_model.b['1'],b2=target_model.b['2'])
 
 	def load_model(self):
-		model = self.model
-		best_params = np.load(saved_params_file)
+		local_model = self.model
+		target_model = self.target_model
+
+		best_params = np.load(LOCAL_WEIGHTS_SAVE)
 		W = {
 			'1' : best_params['W1'],
 			'2' : best_params['W2']
@@ -142,7 +155,18 @@ class DQN:
 			'1' : best_params['b1'],
 			'2' : best_params['b2'],
 		}
-		model.set_params(W,b)
+		local_model.set_params(W,b)
+
+		best_params = np.load(TARGET_WEIGHTS_SAVE)
+		W = {
+			'1' : best_params['W1'],
+			'2' : best_params['W2']
+		}
+		b = {
+			'1' : best_params['b1'],
+			'2' : best_params['b2'],
+		}
+		target_model.set_params(W,b)
 
 	def init_NN(self):
 		nn = NN(self.input_size,self.output_size)
@@ -211,11 +235,12 @@ def play_game(agent):
 	print('Reward: ',total_r)
 
 def run(train):
-	env = gym.make(env_name)
+	env = gym.make(ENV_NAME)
+	# env.seed(42)
 	dqn_agent = DQN(env)
 
 	if train:
-		for ep in range(episodes):
+		for ep in range(EPISODES):
 			curr_obs = env.reset()
 			curr_obs = reshape_input(curr_obs)
 			total_r = 0
@@ -241,7 +266,7 @@ def run(train):
 						dqn_agent.train_target_network()
 					break
 			print('Episode ',ep,' -> Score: ',total_r)
-		dqn_agent.save_model(dqn_agent.model)
+		dqn_agent.save_model()
 	else:
 		play_game(dqn_agent)
 
