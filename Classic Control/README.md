@@ -9,11 +9,11 @@ This directory contains problems from the "Classic Control" section of the OpenA
 
 ## DQN-CartPole
 
-Contains code for a DQN written from scratch using Python and NumPy. It implements a DDQN (Double DQN) with experience replay, where the "Model" network is used to predict optimal actions from the observations of the environment, and a "Target" network is trained every few episodes to help in predicting the true Q-values of actions taken by the agent. This is not really required for the simple CartPole problem, but demonstrates the power of a DDQN, as it solves the environment in only about 20 episodes.
+Contains code for a DQN written from scratch using Python and NumPy. It implements a DDQN (Double DQN) with experience replay, where the "Model" network is used to predict optimal actions from the observations of the environment, and a "Target" network is trained every few episodes to help in predicting the true Q-values of actions taken by the agent. This is not really required for the simple CartPole problem, but demonstrates the power of a DDQN, as it solves the environment in only about 250 episodes.
 
 ## DQN-MountainCar  
 
-Contains code for a DQN written using Python, Tensorflow/Keras and NumPy. It implements a DDQN (Double DQN) with experience replay, where the "Model" network is used to predict optimal actions from the observations of the environment, and a "Target" network is trained every few episodes to help in predicting the true Q-values of actions taken by the agent. This is required for the MountainCar problem, since there is no real "reward" that the agent gets unless it reaches the goal. Using the same "model" network as its target would cause the neural network to chase a moving target, and never converge to a solution. The current implementation solves the environment in about 1000 episodes.
+Contains code for a DQN written using Python, Tensorflow/Keras and NumPy. It implements a DDQN (Double DQN) with experience replay, where the "Model" network is used to predict optimal actions from the observations of the environment, and a "Target" network is trained every few episodes to help in predicting the true Q-values of actions taken by the agent. This is required for the MountainCar problem, since there is no real "reward" that the agent gets unless it reaches the goal. Using the same "model" network as its target would cause the neural network to chase a moving target, and never converge to a solution. The current implementation solves the environment in about 5000 episodes.
 
 ## Running
 

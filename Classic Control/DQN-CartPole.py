@@ -3,8 +3,10 @@ import numpy as np
 import random
 import sys
 import os
+import pickle
 
 from collections import deque
+from pathlib import Path
 
 
 np.random.seed(42)
@@ -15,6 +17,7 @@ if not os.path.exists(SAVE_FOLDER):
 	os.mkdir(SAVE_FOLDER)
 LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.npz')
 TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.npz')
+REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-replay-buffer.pickle')
 
 EPISODES = 250
 render = False
@@ -135,38 +138,46 @@ class DQN:
 		self.model = self.init_NN()
 		self.target_model = self.init_NN()
 
+		self.load_model()
+
 	def save_model(self):
 		local_model = self.model
 		target_model = self.target_model
 
 		np.savez(LOCAL_WEIGHTS_SAVE,W1=local_model.W['1'],W2=local_model.W['2'],b1=local_model.b['1'],b2=local_model.b['2'])
 		np.savez(TARGET_WEIGHTS_SAVE,W1=target_model.W['1'],W2=target_model.W['2'],b1=target_model.b['1'],b2=target_model.b['2'])
+		with open(REPLAY_BUFFER_SAVE, 'wb') as handle:
+			pickle.dump(self.memory, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 	def load_model(self):
 		local_model = self.model
 		target_model = self.target_model
+		if Path(LOCAL_WEIGHTS_SAVE).exists():
+			best_params = np.load(LOCAL_WEIGHTS_SAVE)
+			W = {
+				'1' : best_params['W1'],
+				'2' : best_params['W2']
+			}
+			b = {
+				'1' : best_params['b1'],
+				'2' : best_params['b2'],
+			}
+			local_model.set_params(W,b)
 
-		best_params = np.load(LOCAL_WEIGHTS_SAVE)
-		W = {
-			'1' : best_params['W1'],
-			'2' : best_params['W2']
-		}
-		b = {
-			'1' : best_params['b1'],
-			'2' : best_params['b2'],
-		}
-		local_model.set_params(W,b)
-
-		best_params = np.load(TARGET_WEIGHTS_SAVE)
-		W = {
-			'1' : best_params['W1'],
-			'2' : best_params['W2']
-		}
-		b = {
-			'1' : best_params['b1'],
-			'2' : best_params['b2'],
-		}
-		target_model.set_params(W,b)
+		if Path(TARGET_WEIGHTS_SAVE).exists():
+			best_params = np.load(TARGET_WEIGHTS_SAVE)
+			W = {
+				'1' : best_params['W1'],
+				'2' : best_params['W2']
+			}
+			b = {
+				'1' : best_params['b1'],
+				'2' : best_params['b2'],
+			}
+			target_model.set_params(W,b)
+		if Path(REPLAY_BUFFER_SAVE).exists():
+			with open(REPLAY_BUFFER_SAVE, 'rb') as handle:
+				self.memory = pickle.load(handle)
 
 	def init_NN(self):
 		nn = NN(self.input_size,self.output_size)

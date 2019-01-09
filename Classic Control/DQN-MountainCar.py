@@ -7,6 +7,7 @@ from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.models import load_model
 import sys
 import os
+import pickle
 
 from pathlib import Path
 from collections import deque
@@ -19,6 +20,8 @@ if not os.path.exists(SAVE_FOLDER):
     os.mkdir(SAVE_FOLDER)
 LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.h5')
 TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.h5')
+TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-chkpt.npz')
+REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-replay-buffer.pickle')
 
 EPISODES = 2000
 render = False
@@ -89,11 +92,17 @@ class DQN:
     def save_model(self):
         self.model.save(LOCAL_WEIGHTS_SAVE)
         self.target_model.save(TARGET_WEIGHTS_SAVE)
+        with open(REPLAY_BUFFER_SAVE, 'wb') as handle:
+            pickle.dump(self.memory, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
     def load_model(self):
         if Path(LOCAL_WEIGHTS_SAVE).exists():
             self.model = load_model(LOCAL_WEIGHTS_SAVE)
         if Path(TARGET_WEIGHTS_SAVE).exists():
             self.target_model = load_model(TARGET_WEIGHTS_SAVE)
+        if Path(REPLAY_BUFFER_SAVE).exists():
+            with open(REPLAY_BUFFER_SAVE, 'rb') as handle:
+                self.memory = pickle.load(handle)
 
 def reshape_input(X):
 	X = X.reshape(-1,X.shape[0])
@@ -106,8 +115,13 @@ def train():
     consolidation_counter = 0
 
     dqn_agent = DQN(env=env)
-    
-    for ep in range(EPISODES):
+    ep_start = 0
+    if Path(TRAIN_CHKPT_SAVE).exists():
+        train_chkpt = np.load(TRAIN_CHKPT_SAVE)
+        ep_start = train_chkpt['ep']
+        dqn_agent.epsilon = train_chkpt['epsi']
+
+    for ep in range(ep_start,EPISODES):
         curr_obs = env.reset()
         curr_obs = reshape_input(curr_obs)
         total_r = 0
@@ -129,11 +143,11 @@ def train():
                 # env.close()
                 dqn_agent.target_train()
                 break
-        
+        np.savez(TRAIN_CHKPT_SAVE,ep=ep,epsi=dqn_agent.epsilon)
         reward_window.append(total_r)
         dqn_agent.update_epsilon()
         print('Episode {} : Reward = {}'.format(ep,total_r))
-        if ep % 100 == 0:
+        if ep % 50 == 0:
             dqn_agent.save_model()
         avg_reward_window = np.mean(reward_window)
         if avg_reward_window >= target_reward:
@@ -144,6 +158,7 @@ def train():
                 return
             else:
                 consolidation_counter = 0
+    
     print('INCOMPLETE training with avg reward {} over last 100 episodes. Training ran for a total of {} episodes.'.format(avg_reward_window,ep+1))
     return
     

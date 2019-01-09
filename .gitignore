@@ -1,3 +1,4 @@
 *.npz
 *.npy
 *.h5
+*.pickle
