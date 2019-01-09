@@ -20,6 +20,14 @@ def save_to_gdrive(src_folder,fnames):
             os.remove(dst)
         copyfile(src,dst)
 
+def load_from_gdrive(dst_folder,fnames):
+    for fn in fnames:
+        src = os.path.join('/content/drive/My Drive/MountainCar',fn)
+        dst = os.path.join(dst_folder,fn)
+        if os.path.isfile(dst):
+            os.remove(dst)
+        copyfile(src,dst)
+
 np.random.seed(42)
 ENV_NAME = 'MountainCar-v0'
 SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
@@ -109,8 +117,10 @@ class DQN:
         self.target_model.save(TARGET_WEIGHTS_SAVE)
         with open(REPLAY_BUFFER_SAVE, 'wb') as handle:
             pickle.dump(self.memory, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        save_to_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
 
     def load_model(self):
+        load_from_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
         if Path(LOCAL_WEIGHTS_SAVE).exists():
             self.model = load_model(LOCAL_WEIGHTS_SAVE)
         if Path(TARGET_WEIGHTS_SAVE).exists():
@@ -118,6 +128,7 @@ class DQN:
         if Path(REPLAY_BUFFER_SAVE).exists():
             with open(REPLAY_BUFFER_SAVE, 'rb') as handle:
                 self.memory = pickle.load(handle)
+
 
 def reshape_input(X):
 	X = X.reshape(-1,X.shape[0])
@@ -164,7 +175,6 @@ def train():
         print('Episode {} : Reward = {}'.format(ep,total_r))
         if ep % 50 == 0:
             dqn_agent.save_model()
-            save_to_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
         avg_reward_window = np.mean(reward_window)
         if avg_reward_window >= target_reward:
             consolidation_counter += 1
