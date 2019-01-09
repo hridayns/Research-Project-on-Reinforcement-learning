@@ -12,9 +12,9 @@ from shutil import copyfile
 from pathlib import Path
 from collections import deque
 
-def save_to_gdrive(fnames):
+def save_to_gdrive(src_folder,fnames):
     for fn in fnames:
-        src = os.path.join(os.getcwd(),fn)
+        src = os.path.join(src_folder,fn)
         dst = os.path.join('/content/drive/My Drive/MountainCar',fn)
         if os.path.isfile(dst):
             os.remove(dst)
@@ -164,7 +164,7 @@ def train():
         print('Episode {} : Reward = {}'.format(ep,total_r))
         if ep % 50 == 0:
             dqn_agent.save_model()
-            save_to_gdrive(GDRIVE_FILE_SAVES)
+            save_to_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
         avg_reward_window = np.mean(reward_window)
         if avg_reward_window >= target_reward:
             consolidation_counter += 1
