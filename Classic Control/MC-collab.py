@@ -25,12 +25,18 @@ ENV_NAME = 'MountainCar-v0'
 SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
 if not os.path.exists(SAVE_FOLDER):
     os.mkdir(SAVE_FOLDER)
-LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-collab-local-weights.h5')
-TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-collab-target-weights.h5')
-TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-collab-chkpt.npz')
-REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-collab-replay-buffer.pickle')
 
-GDRIVE_FILE_SAVES = [LOCAL_WEIGHTS_SAVE,TARGET_WEIGHTS_SAVE,REPLAY_BUFFER_SAVE,TRAIN_CHKPT_SAVE]
+LOCAL_WEIGHTS_FILE = ENV_NAME + '-collab-local-weights.h5'
+TARGET_WEIGHTS_FILE = ENV_NAME + '-collab-target-weights.h5'
+TRAIN_CHKPT_FILE = ENV_NAME + '-collab-chkpt.npz'
+REPLAY_BUFFER_FILE = ENV_NAME + '-collab-replay-buffer.pickle'
+
+LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,LOCAL_WEIGHTS_FILE)
+TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,TARGET_WEIGHTS_FILE)
+TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,TRAIN_CHKPT_FILE)
+REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,REPLAY_BUFFER_FILE)
+
+GDRIVE_FILE_SAVES = [LOCAL_WEIGHTS_FILE,TARGET_WEIGHTS_FILE,REPLAY_BUFFER_FILE,TRAIN_CHKPT_FILE]
 
 EPISODES = 2000
 render = False
