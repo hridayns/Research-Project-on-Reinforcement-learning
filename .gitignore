@@ -2,3 +2,4 @@
 *.npy
 *.h5
 *.pickle
+test_runs/

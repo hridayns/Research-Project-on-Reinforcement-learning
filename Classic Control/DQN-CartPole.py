@@ -5,6 +5,9 @@ import sys
 import os
 import pickle
 
+from datetime import datetime
+from time import time
+from gym.wrappers import Monitor
 from collections import deque
 from pathlib import Path
 
@@ -229,7 +232,9 @@ def reshape_input(X):
 
 def play_game(agent):
 	agent.load_model()
-	env = agent.env
+	env = agent.env.env
+	ts = datetime.fromtimestamp(time()).strftime('%d-%m-%Y %HH %MM %SS')
+	env = Monitor(env, './test_runs/' + ENV_NAME + '-' + ts + '/')
 	curr_obs = env.reset()
 	curr_obs = reshape_input(curr_obs)
 	total_r = 0

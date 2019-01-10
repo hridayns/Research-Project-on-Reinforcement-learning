@@ -1,17 +1,20 @@
 import gym
 import numpy as np
 import random
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout
-from tensorflow.python.keras.optimizers import Adam
-from tensorflow.python.keras.models import load_model
 import sys
 import os
 import pickle
 
-from pathlib import Path
+from datetime import datetime
+from time import time
+from gym.wrappers import Monitor
 from collections import deque
+from pathlib import Path
 
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense, Dropout
+from tensorflow.python.keras.optimizers import Adam
+from tensorflow.python.keras.models import load_model
 
 np.random.seed(42)
 ENV_NAME = 'MountainCar-v0'
@@ -163,9 +166,12 @@ def train():
     return
     
 def test():
-    env = gym.make(env_name)
+    env = gym.make(ENV_NAME)
     trained_agent = DQN(env=env)
     trained_agent.load_model()
+    env = trained_agent.env.env
+    ts = datetime.fromtimestamp(time()).strftime('%d-%m-%Y %HH %MM %SS')
+    env = Monitor(env, './test_runs/' + ENV_NAME + '-' + ts + '/')
     curr_obs = env.reset()
     curr_obs = reshape_input(curr_obs)
     steps = 0
