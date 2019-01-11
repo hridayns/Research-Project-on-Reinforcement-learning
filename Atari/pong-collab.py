@@ -8,6 +8,7 @@ import arg_parser
 import os
 import pickle
 from shutil import copyfile
+from sys import getsizeof
 
 from gym import spaces
 from collections import deque
@@ -164,7 +165,7 @@ class Learner:
 		
 		print('Memory spaces filled: {}/{} blocks'.format(n,REPLAY_MEM_SIZE))
 		print('current size of memory: {}/{} MB'.format(block*n,block*REPLAY_MEM_SIZE))
-		
+
 	def step_update(self,tot_step):
 		if(len(self.memory)) < self.replay_start:
 			return
