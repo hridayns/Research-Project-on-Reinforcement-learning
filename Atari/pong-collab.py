@@ -14,9 +14,6 @@ from collections import deque
 from pathlib import Path
 from gymWrapper import GymAtari
 
-import matplotlib.pyplot as plt
-from matplotlib import animation
-
 from tensorflow.python.keras.models import Sequential,load_model
 from tensorflow.python.keras.layers import Dense,Dropout,Conv2D,Flatten
 from tensorflow.python.keras.optimizers import RMSprop
@@ -95,13 +92,6 @@ EXPLORATION_INIT = 1.0
 NOTE : To really save the MODEL and RESUME from where you left off, the REPLAY BUFFER state has to be saved as well. Think about it. Saving
 EPSILON value seems TRIVIAL now.
 '''
-if Path(CHECKPOINT_PARAMS_SAVE).exists():
-	params = np.load(CHECKPOINT_PARAMS_SAVE)
-	ep_start = params['episode']
-	global_step = params['global_step']
-	# EXPLORATION_INIT = params['epsilon']
-	params.close()
-	print('Loaded checkpoint parameters from last run...')
 
 class Learner:
 	def __init__(self,env):
