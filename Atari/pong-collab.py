@@ -32,7 +32,8 @@ def load_from_gdrive(dst_folder,fnames):
 		dst = os.path.join(dst_folder,fn)
 		if os.path.isfile(dst):
 			os.remove(dst)
-		copyfile(src,dst)
+		if os.path.isfile(src):
+			copyfile(src,dst)
 
 np.random.seed(42)
 ENV_NAME = 'PongDeterministic-v4'
