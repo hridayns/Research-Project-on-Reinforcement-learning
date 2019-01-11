@@ -13,6 +13,7 @@ def parse():
 	parser.add_argument('--gamma',help='number of episodes',type=float)
 	parser.add_argument('--batch_size',help='number of episodes',type=int)
 	parser.add_argument('--lr',help='Learning rate',type=float)
+	parser.add_argument('--save_freq',help='Model saving frequency',type=int)
 
 	args = parser.parse_args()
 	return args

@@ -84,6 +84,8 @@ if args.lr:
 	ALPHA = args.lr
 if args.batch_size:
 	BATCH_SIZE = args.batch_size
+if args.model_save_freq:
+	MODEL_SAVE_FREQUENCY = args.model_save_freq
 if args.test:
 	print('Testing agent...')
 
