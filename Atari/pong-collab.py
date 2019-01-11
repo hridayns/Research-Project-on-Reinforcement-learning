@@ -38,19 +38,20 @@ def load_from_gdrive(dst_folder,fnames):
 
 np.random.seed(42)
 ENV_NAME = 'PongDeterministic-v4'
-SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
-if not os.path.exists(SAVE_FOLDER):
-    os.mkdir(SAVE_FOLDER)
+DRIVE_FOLDER = '/content/drive/My Drive/Pong'
+# SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
+if not os.path.exists(DRIVE_FOLDER):
+    os.mkdir(DRIVE_FOLDER)
 
 LOCAL_WEIGHTS_FILE = ENV_NAME + '-collab-local-weights.h5'
 TARGET_WEIGHTS_FILE = ENV_NAME + '-collab-target-weights.h5'
 TRAIN_CHKPT_FILE = ENV_NAME + '-collab-chkpt.npz'
 REPLAY_BUFFER_FILE = ENV_NAME + '-collab-replay-buffer.pickle'
 
-LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,LOCAL_WEIGHTS_FILE)
-TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,TARGET_WEIGHTS_FILE)
-TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,TRAIN_CHKPT_FILE)
-REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,REPLAY_BUFFER_FILE)
+LOCAL_WEIGHTS_SAVE = os.path.join(DRIVE_FOLDER,LOCAL_WEIGHTS_FILE)
+TARGET_WEIGHTS_SAVE = os.path.join(DRIVE_FOLDER,TARGET_WEIGHTS_FILE)
+TRAIN_CHKPT_SAVE = os.path.join(DRIVE_FOLDER,TRAIN_CHKPT_FILE)
+REPLAY_BUFFER_SAVE = os.path.join(DRIVE_FOLDER,REPLAY_BUFFER_FILE)
 
 GDRIVE_FILE_SAVES = [LOCAL_WEIGHTS_FILE,TARGET_WEIGHTS_FILE,REPLAY_BUFFER_FILE,TRAIN_CHKPT_FILE]
 
@@ -137,7 +138,7 @@ class Learner:
 		return model
 
 	def load_checkpoint(self):
-		load_from_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
+		# load_from_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
 		if Path(LOCAL_WEIGHTS_SAVE).exists():
 			self.local_model = load_model(LOCAL_WEIGHTS_SAVE)
 			print('Local Model loaded...')
@@ -150,21 +151,29 @@ class Learner:
 				print('Replay Buffer loaded...')
 
 	def save_checkpoint(self):
+		if os.path.isfile(LOCAL_WEIGHTS_SAVE):
+			os.remove(LOCAL_WEIGHTS_SAVE)
 		self.local_model.save(LOCAL_WEIGHTS_SAVE)
+		if os.path.isfile(TARGET_WEIGHTS_SAVE):
+			os.remove(TARGET_WEIGHTS_SAVE)
 		self.target_model.save(TARGET_WEIGHTS_SAVE)
+		if os.path.isfile(REPLAY_BUFFER_SAVE):
+			os.remove(REPLAY_BUFFER_SAVE)
 		with open(REPLAY_BUFFER_SAVE, 'wb') as handle:
 			pickle.dump(self.memory, handle, protocol=pickle.HIGHEST_PROTOCOL)
-		save_to_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
+		# save_to_gdrive(SAVE_FOLDER,GDRIVE_FILE_SAVES)
 		print('Checkpoint saved...')
 
 	def remember(self,curr_obs,action,reward,next_obs,done):
 		self.memory.append([curr_obs,action,reward,next_obs,done])
+		'''
 		block = (curr_obs.nbytes + next_obs.nbytes + getsizeof(action) + getsizeof(reward) + getsizeof(done))/(1024*1024)
 		n = len(self.memory)
 		print('One block = {} MB'.format(block))
 		
 		print('Memory spaces filled: {}/{} blocks'.format(n,REPLAY_MEM_SIZE))
 		print('current size of memory: {}/{} MB'.format(block*n,block*REPLAY_MEM_SIZE))
+		'''
 
 	def step_update(self,tot_step):
 		if(len(self.memory)) < self.replay_start:
@@ -314,6 +323,8 @@ for ep in range(ep_start,EPISODES):
 			# agent.target_train()
 			env.close()
 			break
+	if os.path.isfile(TRAIN_CHKPT_SAVE):
+		os.remove(TRAIN_CHKPT_SAVE)
 	np.savez(TRAIN_CHKPT_SAVE,ep=ep,g_step=global_step,epsi=agent.epsilon)
 	print('Total Reward for episode {}: {}'.format(ep,total_r))
 	print('Global Timestep: {}'.format(global_step))
