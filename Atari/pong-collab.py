@@ -158,7 +158,13 @@ class Learner:
 
 	def remember(self,curr_obs,action,reward,next_obs,done):
 		self.memory.append([curr_obs,action,reward,next_obs,done])
-
+		block = (curr_obs.nbytes + next_obs.nbytes + getsizeof(action) + getsizeof(reward) + getsizeof(done))/(1024*1024)
+		n = len(self.memory)
+		print('One block = {} MB'.format(block))
+		
+		print('Memory spaces filled: {}/{} blocks'.format(n,REPLAY_MEM_SIZE))
+		print('current size of memory: {}/{} MB'.format(block*n,block*REPLAY_MEM_SIZE))
+		
 	def step_update(self,tot_step):
 		if(len(self.memory)) < self.replay_start:
 			return
