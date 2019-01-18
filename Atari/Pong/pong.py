@@ -10,6 +10,9 @@ from collections import deque
 from pathlib import Path
 from gymWrapper import GymAtari
 
+import matplotlib.pyplot as plt
+from matplotlib import animation
+
 from tensorflow.python.keras.models import Sequential,load_model
 from tensorflow.python.keras.layers import Dense,Dropout,Conv2D,Flatten
 from tensorflow.python.keras.optimizers import RMSprop
@@ -116,13 +119,6 @@ class Learner:
 			self.target_model.load_weights(TARGET_NETWORK_WEIGHTS_SAVE)
 			print('Target model loaded...')
 
-		# if Path(CHECKPOINT_PARAMS_SAVE).exists():
-		# 	params = np.load(CHECKPOINT_PARAMS_SAVE)
-		# 	self.ep_start = params['episode']
-		# 	self.epsilon = params['epsilon']
-		# 	params.close()
-		# 	print('Loaded checkpoint parameters from last run...')
-
 	def save_checkpoint(self):
 		self.local_model.save_weights(LOCAL_NETWORK_WEIGHTS_SAVE)
 		self.target_model.save_weights(TARGET_NETWORK_WEIGHTS_SAVE)
@@ -214,6 +210,18 @@ class Learner:
 		cv.imshow('frame', obs[:,:,self.k-1])
 		cv.waitKey(50)
 
+def save_frames_as_gif(frames, filename=None):
+	"""
+	Save a list of frames as a gif
+	"""
+	patch = plt.imshow(frames[0])
+	plt.axis('off')
+	def animate(i):
+		patch.set_data(frames[i])
+	anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
+	if filename:
+		anim.save(filename, dpi=72, writer='imagemagick')
+
 def play_test(agent):
 	env = agent.env
 	for i in range(100):
@@ -239,9 +247,9 @@ def play_test(agent):
 				print('Total score: {}'.format(total_r))
 				break
 
+
 env = gym.make(ENV_NAME)
 env = GymAtari.wrap(env,FRAME_BUFFER_SIZE)
-
 
 agent = Learner(env=env)
 if args.test:
@@ -263,11 +271,13 @@ for ep in range(ep_start,EPISODES):
 	render = False
 	if args.render:
 		if ep % args.render_freq == 0:
+			frame_gif = deque()
 			render = True
 	while True:
 		if render:
 			# agent.render_frame(curr_obs)
-			env.render()
+			frame_gif.append(curr_obs)
+			# env.render()
 		global_step += 1
 		step += 1
 		action = agent.act(curr_obs)
@@ -290,7 +300,7 @@ for ep in range(ep_start,EPISODES):
 			# agent.target_train()
 			env.close()
 			break
-
+	# save_frames_as_gif(frame_gif, filename='pong-ep-' + str(ep) + '-run.gif')
 	np.savez(CHECKPOINT_PARAMS_SAVE,episode=ep,global_step=global_step)#,epsilon=agent.epsilon)
 	print('Total Reward for episode {}: {}'.format(ep,total_r))
 	print('Global Timestep: {}'.format(global_step))

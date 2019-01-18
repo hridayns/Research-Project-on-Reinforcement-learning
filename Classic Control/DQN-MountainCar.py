@@ -15,16 +15,17 @@ from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Dense, Dropout
 from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.models import load_model
+from tensorflow.python.keras.callbacks import TensorBoard 
 
 np.random.seed(42)
 ENV_NAME = 'MountainCar-v0'
 SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
 if not os.path.exists(SAVE_FOLDER):
     os.mkdir(SAVE_FOLDER)
-LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.h5')
-TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.h5')
-TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-chkpt.npz')
-REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-replay-buffer.pickle')
+LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights1.h5')
+TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights1.h5')
+TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-chkpt1.npz')
+REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-replay-buffer1.pickle')
 
 EPISODES = 2000
 render = False
@@ -58,6 +59,7 @@ class DQN:
         model.add(Dense(self.env.action_space.n))
         model.compile(loss="mean_squared_error",
             optimizer=Adam(lr=self.learning_rate))
+
         return model
 
     def act(self, state):
@@ -78,6 +80,7 @@ class DQN:
         if len(self.memory) < self.batch_size: 
             return
 
+        tensorboard = TensorBoard(log_dir="./tf-logs/{}".format(time()))
         samples = random.sample(self.memory, self.batch_size)
         for sample in samples:
             curr_obs, action, reward, next_obs, done = sample
@@ -87,7 +90,8 @@ class DQN:
             else:   
                 Q_future = max(self.target_model.predict(next_obs)[0])
                 target[0][action] = reward + self.gamma * Q_future
-            self.model.fit(curr_obs, target, epochs=1, verbose=0)
+
+            self.model.fit(curr_obs, target, epochs=1, verbose=0,callbacks=[tensorboard])
 
     def target_train(self):
         self.target_model.set_weights(self.model.get_weights())

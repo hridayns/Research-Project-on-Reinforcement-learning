@@ -14,6 +14,7 @@ def parse():
 	parser.add_argument('--batch_size',help='number of episodes',type=int)
 	parser.add_argument('--lr',help='Learning rate',type=float)
 	parser.add_argument('--save_freq',help='Model saving frequency',type=int)
+	parser.add_argument('--target_train_freq',help='Target model train frequency',type=int)
 	parser.add_argument('--replay_start',help='Global timestep after which replay can start',type=int)
 
 	args = parser.parse_args()

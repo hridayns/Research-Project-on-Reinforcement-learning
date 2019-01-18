@@ -2,4 +2,6 @@
 *.npy
 *.h5
 *.pickle
+__pycache__/
 test_runs/
+experimental/
