@@ -34,6 +34,10 @@ class DDQNGameModel(BaseGameModel):
 		if not os.path.exists(self.model_path):
 			os.makedirs(self.model_path)
 
+		if self.collab:
+			print('Local Model save path: {}'.format(self.local_save_path))
+			print('Local Model save path: {}'.format(self.target_save_path))
+
 		if os.path.isfile(self.local_save_path):
 			self.local_model.load_weights(self.local_save_path)
 			print('Loaded Checkpoint: Local model...')
