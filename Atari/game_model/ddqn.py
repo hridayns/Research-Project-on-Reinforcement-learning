@@ -4,8 +4,12 @@ from NeuralNet import NeuralNet
 
 #External imports
 import os
-import pickle
+try:
+	import cPickle as pickle
+except:
+	import pickle
 import numpy as np
+from sys import getsizeof
 from random import sample
 from collections import deque
 
@@ -103,6 +107,21 @@ class DDQNLearner(DDQNGameModel):
 			pickle.dump(self.memory, handle, protocol=pickle.HIGHEST_PROTOCOL)
 		print('Checkpoint replay buffer saved...')
 
+	'''
+	def calc_buffer_size(self):
+		tot = 0
+		for data in self.memory[0]:
+			if type(data) is np.ndarray:
+				tot += data.nbytes
+			else:
+				tot += getsizeof(data)
+		block_size = tot / (1024 * 1024)
+
+		print('Block size: {}'.format(block_size))
+		for i in [100,1000,5000,10000,25000,50000,100000,1000000]:
+			print('Buffer size of {} blocks: {} MB'.format(i,i*block_size))
+		input()
+	'''
 
 	def act(self,obs):
 		if np.random.rand() < self.epsilon or len(self.memory) < self.replay_start_size:
@@ -116,6 +135,11 @@ class DDQNLearner(DDQNGameModel):
 	def step_update(self,tot_step):
 		if len(self.memory) < self.replay_start_size:
 			return
+		'''
+		if len(self.memory) == self.replay_buffer_size:
+			self.calc_buffer_size()
+			exit()
+		'''
 		if tot_step % self.training_freq == 0:
 			self.replay()
 

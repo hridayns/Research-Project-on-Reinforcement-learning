@@ -69,9 +69,8 @@ class AtariRL:
 				next_obs,reward,done,info = env.step(action)
 				next_obs = next_obs.__array__(dtype=np.float32)
 
-				reward = np.uint8(reward)
 				if clip:
-					reward = np.sign(reward,dtype=np.uint8)
+					reward = np.sign(reward)
 				score += reward
 
 				agent.remember(curr_obs,action,reward,next_obs,done)
@@ -80,11 +79,14 @@ class AtariRL:
 				agent.step_update(total_step)
 
 				if done:
+					# print('done score: {}'.format(score))
 					break
 			
 			if os.path.isfile(agent.state_save_path):
 				os.remove(agent.state_save_path)
 			np.savez(agent.state_save_path,ep=ep,total_step=total_step,epsilon=agent.epsilon)
+			# print('score: {}'.format(score))
+			# input()
 			score_window.append(score)
 			avg_score = np.mean(score_window)
 			print('Episode {} | Global Timestep {}'.format(ep,total_step))

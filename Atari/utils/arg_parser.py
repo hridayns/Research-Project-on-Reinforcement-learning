@@ -11,7 +11,7 @@ def parse():
 	parser.add_argument('-rfq','--render_freq',help='Render environment every N episodes',default=10)
 	parser.add_argument('-eps','--episodes',help='Number of episodes',type=int,default=5000)
 	parser.add_argument('-tsl','--total_step_lim',help='Limit on total number of global timesteps',type=int,default=5000000)
-	parser.add_argument('-mem','--buffer_size',help='Replay Buffer size',type=int,default=50000)
+	parser.add_argument('-mem','--buffer_size',help='Replay Buffer size',type=int,default=5000)
 	parser.add_argument('-g','--gamma',help='Discount factor',type=float,default=0.99)
 	parser.add_argument('-b','--batch_size',help='Batch size',type=int,default=32)
 	parser.add_argument('-lr','--learning_rate',help='Learning rate',type=float,default=0.00025)

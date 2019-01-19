@@ -1,7 +1,7 @@
 import os
 
 MODEL_PATH = os.path.join(os.getcwd(),'saved_models')
-DRIVE_PATH = '/content/drive/My Drive'
+DRIVE_PATH = os.path.join('/content/drive/My Drive','saved_models')
 
 class BaseGameModel:
 	def __init__(self,game_name,input_dims,action_space):
