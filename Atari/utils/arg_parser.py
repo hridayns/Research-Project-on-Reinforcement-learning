@@ -16,9 +16,11 @@ def parse():
 	parser.add_argument('-b','--batch_size',help='Batch size',type=int,default=32)
 	parser.add_argument('-lr','--learning_rate',help='Learning rate',type=float,default=0.00025)
 	parser.add_argument('--save_freq',help='Model saving frequency (in timesteps)',type=int,default=10000)
+	parser.add_argument('--train_freq',help='Model training frequency (in timesteps)',type=int,default=4)
 	parser.add_argument('--target_train_freq',help='Target model train frequency(in timesteps)',type=int,default=40000)
 	parser.add_argument('--replay_start',help='Global timestep after which replay can start',type=int,default=50000)
 	parser.add_argument('-c','--clip',help='Clip rewards to scale?',action='store_true')
+	parser.add_argument('-collab','--collab_drive_save',help='Dev argument for working with Google Collab',action='store_true')
 
 	args = parser.parse_args()
 	return args
