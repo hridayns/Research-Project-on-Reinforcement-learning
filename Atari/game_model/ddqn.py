@@ -111,7 +111,8 @@ class DDQNLearner(DDQNGameModel):
 			copyfile(self.replay_buffer_save_path,tmp)
 		with open(self.replay_buffer_save_path, 'wb') as handle:
 			pickle.dump(self.memory, handle, protocol=pickle.HIGHEST_PROTOCOL)
-		os.remove(tmp)
+		if os.path.isfile(tmp):
+			os.remove(tmp)
 		print('Checkpoint replay buffer saved...')
 
 	'''
