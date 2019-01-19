@@ -9,6 +9,7 @@ try:
 except:
 	import pickle
 import numpy as np
+from shutil import copyfile
 from sys import getsizeof
 from random import sample
 from collections import deque
@@ -105,10 +106,12 @@ class DDQNLearner(DDQNGameModel):
 		# input()
 
 	def save_replay_buffer(self):
+		tmp = os.path.join(self.model_path,'replay-buffer-old.pickle')
 		if os.path.isfile(self.replay_buffer_save_path):
-			os.remove(self.replay_buffer_save_path)
+			copyfile(self.replay_buffer_save_path,tmp)
 		with open(self.replay_buffer_save_path, 'wb') as handle:
 			pickle.dump(self.memory, handle, protocol=pickle.HIGHEST_PROTOCOL)
+		os.remove(tmp)
 		print('Checkpoint replay buffer saved...')
 
 	'''

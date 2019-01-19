@@ -79,18 +79,15 @@ class AtariRL:
 				agent.step_update(total_step)
 
 				if done:
-					# print('done score: {}'.format(score))
 					break
 			
 			if os.path.isfile(agent.state_save_path):
 				os.remove(agent.state_save_path)
 			np.savez(agent.state_save_path,ep=ep,total_step=total_step,epsilon=agent.epsilon)
-			# print('score: {}'.format(score))
-			# input()
 			score_window.append(score)
 			avg_score = np.mean(score_window)
 			print('Episode {} | Global Timestep {}'.format(ep,total_step))
-			print('Score: {} | Avg score for past {} episodes: {}'.format(score,window_len,avg_score))
+			print('Score: {} | Last {} episodes Avg score: {}'.format(score,window_len,avg_score))
 
 	def get_agent(self,game_name,mode,input_dims,action_space):
 		if mode == 'test':
