@@ -87,6 +87,7 @@ class DDQNLearner(DDQNGameModel):
 
 		self.state_save_path = os.path.join(self.model_path,'state.npz')
 		self.replay_buffer_save_path = os.path.join(self.model_path,'replay-buffer.pickle')
+		self.score_buffer_save_path = os.path.join(self.model_path,'score-buffer.pickle')
 
 		if os.path.isfile(self.replay_buffer_save_path):
 			with open(self.replay_buffer_save_path, 'rb') as handle:

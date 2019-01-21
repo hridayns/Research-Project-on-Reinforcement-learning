@@ -41,6 +41,11 @@ class AtariRL:
 				agent.epsilon = state['epsilon']
 				print('Loaded state params: episode, total step, and epsilon...')
 
+		if os.path.isfile(agent.score_buffer_save_path):
+			with open(self.score_buffer_save_path, 'rb') as handle:
+				score_window = pickle.load(handle)
+				print('Score Buffer loaded...')
+
 		print('Resuming from episode {}, global timestep {}...'.format(ep,total_step))
 
 		while True:
