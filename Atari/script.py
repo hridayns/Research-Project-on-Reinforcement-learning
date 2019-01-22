@@ -49,12 +49,12 @@ class AtariRL:
 		print('Resuming from episode {}, global timestep {}...'.format(ep,total_step))
 
 		while True:
-			if ep >= episodes:
-				print('Episode limit of {} episodes reached'.format(episodes))
-				exit()
+			# if ep >= episodes:
+			# 	print('Episode limit of {} episodes reached'.format(episodes))
+			# 	exit()
 			ep += 1
 			curr_obs = env.reset()
-			curr_obs = curr_obs.__array__(dtype=np.float32)
+			curr_obs = curr_obs.__array__(dtype=np.uint8)
 
 			step = 0
 			score = 0
@@ -70,9 +70,10 @@ class AtariRL:
 					if ep % rf == 0:
 						env.render()
 
-				action = agent.act(curr_obs)
+				action = np.uint8(agent.act(curr_obs))
 				next_obs,reward,done,info = env.step(action)
-				next_obs = next_obs.__array__(dtype=np.float32)
+				reward = np.int8(reward)
+				next_obs = next_obs.__array__(dtype=np.uint8)
 
 				if clip:
 					reward = np.sign(reward)

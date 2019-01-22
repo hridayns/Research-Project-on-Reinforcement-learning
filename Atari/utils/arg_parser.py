@@ -4,7 +4,7 @@ import sys
 def parse():
 
 	parser = argparse.ArgumentParser(description='Parse parameters.')
-	parser.add_argument('-game','--game_name',help='Name of environment. Default is \'Breakout\'',default='Breakout')
+	parser.add_argument('-game','--game_name',help='Name of environment. Default is \'Pong\'',default='Pong')
 	parser.add_argument('-m','--mode',help='Available modes: train, test. Default is \'train\'',default='train')
 	parser.add_argument('--render',help='Set this flag to render the environment',action='store_true')
 	# if '--render' in sys.argv:
