@@ -1,6 +1,9 @@
 # Internal Imports
 from utils import arg_parser
 from utils.AtariWrapper import GymAtari
+from utils.DataPaths import DataPaths
+from utils.Logger import Logger
+from utils.Plotter import Plotter
 from game_model.ddqn import DDQNLearner,DDQNPlayer
 
 # External Imports
@@ -9,70 +12,89 @@ import gym
 import numpy as np
 from collections import deque
 
-args = arg_parser.parse()
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class AtariRL:
-	def __init__(self):
-		self.args = args
-		self.collab = self.args.collab_drive_save
+	def __init__(self,args):
 
-		game_name = self.args.game_name
-		mode = self.args.mode
+		game_name = args.game_name
+		mode = args.mode
 		env_name = game_name + 'Deterministic-v4'
+
+		data_paths = DataPaths(
+			env_name=game_name,
+			drive=args.drive_save
+		)
+		self.plotter = Plotter(
+			env_name=game_name,
+			plot_types=[
+				'avg_scores_ep',
+				'avg_scores_ts',
+				'scores_ep',
+				'scores_ts',
+				'high_scores_ep',
+				'high_scores_ts',
+				'low_scores_ep',
+				'low_scores_ts',
+				'timesteps_ep'
+			],
+			interval_types=[
+				'overall',
+				'window'
+			],
+			plot_interval=args.plot_interval,
+			data_paths=data_paths
+		)
+		self.logger = Logger(
+			env_name=game_name,
+			log_types=[
+				'avg_score',
+				'highest_score',
+				'lowest_score'
+			],
+			save_interval=args.state_save_interval,
+			data_paths=data_paths
+		)
+
 		env = GymAtari.wrap(gym.make(env_name),4)
 		input_dims = env.reset().__array__().shape[1:]
 
-		agent = self.get_agent(game_name,mode,input_dims,env.action_space)
-		self.game_loop(agent,env,self.args.render,self.args.render_freq,self.args.episodes,self.args.total_step_lim,self.args.clip)
+		agent = self.get_agent(game_name,mode,input_dims,env.action_space,args,data_paths=data_paths)
+		self.game_loop(agent,env,args.render,args.render_freq,args.episodes,args.total_step_lim,args.clip)
 
 	def game_loop(self,agent,env,render,rf,episodes,total_step_lim,clip):
-		
-		agent.show_hyperparams()
-
-		ep = 0
-		total_step = 0
-		window_len = 100
-		score_window = deque(maxlen=window_len)
-
-		if os.path.isfile(agent.state_save_path):
-			with np.load(agent.state_save_path) as state:
-				ep = state['ep']
-				total_step = state['total_step']
-				agent.epsilon = state['epsilon']
-				print('Loaded state params: episode, total step, and epsilon...')
-
-		if os.path.isfile(agent.score_buffer_save_path):
-			with open(self.score_buffer_save_path, 'rb') as handle:
-				score_window = pickle.load(handle)
-				print('Score Buffer loaded...')
-
-		print('Resuming from episode {}, global timestep {}...'.format(ep,total_step))
-
+		ts = self.logger.log_data['ts']
 		while True:
 			# if ep >= episodes:
 			# 	print('Episode limit of {} episodes reached'.format(episodes))
 			# 	exit()
-			ep += 1
 			curr_obs = env.reset()
 			curr_obs = curr_obs.__array__(dtype=np.uint8)
 
-			step = 0
+			t = 0
 			score = 0
-
+			print(ts)
+			print(self.logger.log_data)
+			flag = False
+			if self.logger.log_data['epoch'] == 1:
+				flag = True
+			# input()
 			while True:
-				if total_step >= total_step_lim:
-					print('Total Step limit of {} Global timesteps reahed'.format(total_step_lim))
+				if ts >= total_step_lim:
+					print('Total Step limit of {} Global timesteps reached'.format(total_step_lim))
 					exit()
-				total_step += 1
-				step += 1
+				t += 1
+				ts += 1
 
 				if render:
-					if ep % rf == 0:
+					if self.logger.log_data['epoch'] % rf == 0:
 						env.render()
 
-				action = np.uint8(agent.act(curr_obs))
+				action = agent.act(curr_obs)
+				
+				# action = env.action_space.sample()
 				next_obs,reward,done,info = env.step(action)
-				reward = np.int8(reward)
+				# reward = np.int8(reward)
 				next_obs = next_obs.__array__(dtype=np.uint8)
 
 				if clip:
@@ -82,38 +104,37 @@ class AtariRL:
 				agent.remember(curr_obs,action,reward,next_obs,done)
 				curr_obs = next_obs
 
-				agent.step_update(total_step)
-
+				agent.step_update(ts)
+				
 				if done:
+					env.close()
 					break
-			
-			if os.path.isfile(agent.state_save_path):
-				os.remove(agent.state_save_path)
-			np.savez(agent.state_save_path,ep=ep,total_step=total_step,epsilon=agent.epsilon)
-			score_window.append(score)
-			avg_score = np.mean(score_window)
-			print('Episode {} | Global Timestep {}'.format(ep,total_step))
-			print('Score: {} | Last {} episodes Avg score: {}'.format(score,window_len,avg_score))
+			if flag:
+				print('EP done')
+				input()
+			agent.save_params()
+			self.logger.log_state(t,score)
+			self.plotter.plot_graph(self.logger.log_data)
 
-	def get_agent(self,game_name,mode,input_dims,action_space):
+	def get_agent(self,game_name,mode,input_dims,action_space,args,data_paths=None):
 		if mode == 'test':
-			return DDQNPlayer(game_name,input_dims,action_space)
+			return DDQNPlayer(game_name,input_dims,action_space,data_paths=data_paths)
 		elif mode == 'train':
 
-			mem_size = self.args.buffer_size
-			gamma = self.args.gamma
-			batch_size = self.args.batch_size
-			alpha = self.args.learning_rate
-			save_freq = self.args.save_freq
-			target_train_freq = self.args.target_train_freq
-			replay_start_size = self.args.replay_start
-			train_freq = self.args.train_freq
-			collab = self.collab
+			mem_size = args.buffer_size
+			gamma = args.gamma
+			batch_size = args.batch_size
+			alpha = args.learning_rate
+			save_freq = args.save_freq
+			target_train_freq = args.target_train_freq
+			replay_start_size = args.replay_start
+			train_freq = args.train_freq
 
-			return DDQNLearner(game_name,input_dims,action_space,mem_size,gamma,batch_size,alpha,save_freq,target_train_freq,replay_start_size,train_freq,collab)
+			return DDQNLearner(game_name,input_dims,action_space,mem_size,gamma,batch_size,alpha,save_freq,target_train_freq,replay_start_size,train_freq,data_paths=data_paths)
 
 
 if __name__ == '__main__':
-	AtariRL()
+	args = arg_parser.parse()
+	AtariRL(args)
 
 

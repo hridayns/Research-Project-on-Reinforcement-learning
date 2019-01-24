@@ -1,7 +1,9 @@
 *.npz
 *.npy
 *.h5
+*.hdf5
 *.pickle
 __pycache__/
 test_runs/
 experimental/
+data/

@@ -1,14 +1,10 @@
 import os
 
-MODEL_PATH = os.path.join(os.getcwd(),'saved_models')
-DRIVE_PATH = os.path.join('/content/drive/My Drive','saved_models')
-
 class BaseGameModel:
-	def __init__(self,game_name,input_dims,action_space):
+	def __init__(self,game_name,input_dims,action_space,data_paths=None):
 		self.input_dims = input_dims
 		self.action_space = action_space
-		self.model_path = os.path.join(MODEL_PATH,game_name)
-		self.collab_save_path = os.path.join(DRIVE_PATH,game_name)
+		self.model_path = data_paths.save_folders['model']
 
 	def step_update(self,tot_step):
 		pass
