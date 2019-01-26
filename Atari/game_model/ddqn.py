@@ -5,6 +5,7 @@ from NeuralNet import NeuralNet
 #External imports
 import os
 import h5py
+import pickle
 import numpy as np
 from sys import getsizeof
 from random import sample
@@ -93,12 +94,14 @@ class DDQNLearner(DDQNGameModel):
 		print('Target network update Frequency: {}'.format(self.target_network_update_freq))
 		print('Replay start size: {}'.format(self.replay_start_size))
 
-	def load_replay_buffer(self):
+	def load_replay_buffer(self):`
 		self.show_saved_replay_buffer_size()
 		start = timer()
 		if os.path.isfile(self.replay_buffer_save_path):
-			with h5py.File(self.replay_buffer_save_path,'r') as f:
-				self.memory = deque(f['replay_buffer'])
+			# with h5py.File(self.replay_buffer_save_path,'r') as f:
+			# 	self.memory = deque(f['replay_buffer'])
+			with open(self.replay_buffer_save_path,'rb') as handle:
+				self.memory = pickle.load(handle)
 				print('Replay Buffer loaded...')
 		end = timer()
 		print('Time taken: {} seconds'.format(end-start))
@@ -106,8 +109,10 @@ class DDQNLearner(DDQNGameModel):
 	def save_replay_buffer(self):
 		self.show_saved_replay_buffer_size()
 		start = timer()
-		with h5py.File(self.replay_buffer_save_path,'w') as f:
-			dset = f.create_dataset('replay_buffer',data=np.asarray(self.memory))
+		# with h5py.File(self.replay_buffer_save_path,'w') as f:
+		# 	dset = f.create_dataset('replay_buffer',data=np.asarray(self.memory))
+		with open(self.replay_buffer_save_path,'wb') as handle:
+			pickle.dump(self.memory,handle,protocol=pickle.HIGHEST_PROTOCOL)
 			print('Checkpoint replay buffer saved...')
 		end = timer()
 		print('Time taken: {} seconds'.format(end-start))
