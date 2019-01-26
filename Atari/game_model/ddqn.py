@@ -94,7 +94,7 @@ class DDQNLearner(DDQNGameModel):
 		print('Target network update Frequency: {}'.format(self.target_network_update_freq))
 		print('Replay start size: {}'.format(self.replay_start_size))
 
-	def load_replay_buffer(self):`
+	def load_replay_buffer(self):
 		self.show_saved_replay_buffer_size()
 		start = timer()
 		if os.path.isfile(self.replay_buffer_save_path):
