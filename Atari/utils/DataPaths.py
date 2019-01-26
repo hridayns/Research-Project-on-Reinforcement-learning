@@ -5,7 +5,7 @@ class DataPaths:
 		self.drive = drive
 		
 		local_root_path_components = [os.getcwd(),'data',env_name]
-		drive_root_path_components = ['content','drive','My Drive','data',env_name]
+		drive_root_path_components = ['/content/drive/My Drive','data',env_name]
 
 		self.root_path = os.path.join(*local_root_path_components)
 		if self.drive:
