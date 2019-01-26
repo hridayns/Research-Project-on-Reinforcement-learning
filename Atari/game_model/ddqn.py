@@ -76,7 +76,7 @@ class DDQNLearner(DDQNGameModel):
 		self.memory = deque(maxlen=self.replay_buffer_size)
 
 		self.params_save_path = os.path.join(self.model_path,'params.npz')
-		self.replay_buffer_save_path = os.path.join(self.model_path,'replay-buffer.hdf5')
+		self.replay_buffer_save_path = os.path.join(self.model_path,'replay-buffer.pickle')
 
 		self.drive = data_paths.drive
 		if self.drive:
