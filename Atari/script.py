@@ -73,11 +73,11 @@ class AtariRL:
 
 			t = 0
 			score = 0
-			print(ts)
-			print(self.logger.log_data)
-			flag = False
-			if self.logger.log_data['epoch'] == 1:
-				flag = True
+			# print(ts)
+			# print(self.logger.log_data)
+			# flag = False
+			# if self.logger.log_data['epoch'] == 1:
+				# flag = True
 			# input()
 			while True:
 				if ts >= total_step_lim:
@@ -109,9 +109,9 @@ class AtariRL:
 				if done:
 					env.close()
 					break
-			if flag:
-				print('EP done')
-				input()
+			# if flag:
+			# 	print('EP done')
+			# 	input()
 			agent.save_params()
 			self.logger.log_state(t,score)
 			self.plotter.plot_graph(self.logger.log_data)
