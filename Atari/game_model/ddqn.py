@@ -17,14 +17,14 @@ EXPLORATION_STEPS = 850000
 EXPLORATION_DECAY = (1.0-0.1)/EXPLORATION_STEPS
 
 class DDQNGameModel(BaseGameModel):
-	def __init__(self,game_name,input_dims,action_space,data_paths=None):
+	def __init__(self,game_name,input_dims,action_space,alpha=0.00025,data_paths=None):
 		BaseGameModel.__init__(self,game_name,input_dims,action_space,data_paths=data_paths)
 
 		self.local_save_path = os.path.join(self.model_path,'local-wts.h5')
 		self.target_save_path = os.path.join(self.model_path,'target-wts.h5')
 
-		self.local_model = NeuralNet(self.input_dims,self.action_space).model
-		self.target_model = NeuralNet(self.input_dims,self.action_space).model
+		self.local_model = NeuralNet(self.input_dims,self.action_space,learning_rate=alpha).model
+		self.target_model = NeuralNet(self.input_dims,self.action_space,learning_rate=alpha).model
 
 		self.load_models()
 
@@ -60,7 +60,7 @@ class DDQNPlayer(DDQNGameModel):
 
 class DDQNLearner(DDQNGameModel):
 	def __init__(self,game_name,input_dims,action_space,mem_size,gamma,batch_size,alpha,save_freq,target_train_freq,replay_start_size,train_freq,data_paths=None):
-		DDQNGameModel.__init__(self,game_name,input_dims,action_space,data_paths=data_paths)
+		DDQNGameModel.__init__(self,game_name,input_dims,action_space,alpha=alpha,data_paths=data_paths)
 
 		self.reset_target_network()
 		self.epsilon = 1.0
@@ -142,11 +142,12 @@ class DDQNLearner(DDQNGameModel):
 		self.memory.append([curr_obs,action,reward,next_obs,done])
 
 	def step_update(self,tot_step):
+		hist = None
 		if len(self.memory) < self.replay_start_size:
-			return
+			return hist
 
 		if tot_step % self.training_freq == 0:
-			self.replay()
+			hist = self.replay()
 
 		self.update_epsilon()
 
@@ -158,6 +159,8 @@ class DDQNLearner(DDQNGameModel):
 		if tot_step % self.target_network_update_freq == 0:
 			self.reset_target_network()
 		
+		return hist
+
 
 	def replay(self):
 		if len(self.memory) < self.batch_size:
@@ -181,7 +184,8 @@ class DDQNLearner(DDQNGameModel):
 			update_input[i] = curr_obs
 			update_target[i] = target
 
-		fit = self.local_model.fit(update_input, update_target, batch_size=self.batch_size, verbose=0)
+		fit = self.local_model.fit(update_input, update_target, batch_size=self.batch_size, verbose=0).history
+		return fit
 
 	def update_epsilon(self):
 		self.epsilon = max(self.epsilon_min,self.epsilon - self.epsilon_decay)

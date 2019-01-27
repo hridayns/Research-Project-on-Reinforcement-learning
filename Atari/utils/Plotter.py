@@ -118,7 +118,6 @@ class Plotter:
 		plt.xlabel(xlabel)
 		plt.ylabel(ylabel)
 		plt.savefig(plot_save_path,bbox_inches='tight')
-		# print('{} vs {} plot saved...'.format(xlabel,ylabel))
 		plt.close()
 
 	def plot_graph(self,log_data):
@@ -166,6 +165,14 @@ class Plotter:
 						if not os.path.exists(plot_save_folder):
 							os.makedirs(plot_save_folder)
 						plot_save_path = os.path.join(plot_save_folder,plot_name)
-						self.save_plot(x,y,xlabel,ylabel,plot_save_path)
+						x_size = len(x)
+						y_size = len(y)
+
+						if x_size == y_size:
+							print('Plotting {} type plot: {} vs {}...'.format(interval,xlabel,ylabel))
+							self.save_plot(x,y,xlabel,ylabel,plot_save_path)
+						else:
+							print('Mismatched sizes {} and  {} of x and y data...'.format(x_size,y_size))
+							print('Skipping {} type plot: {} vs {}...'.format(interval,xlabel,ylabel))
 
 			print('Finished drawing plots...')

@@ -50,7 +50,9 @@ class AtariRL:
 			log_types=[
 				'avg_score',
 				'highest_score',
-				'lowest_score'
+				'lowest_score',
+				'avg_loss',
+				'avg_acc'
 			],
 			save_interval=args.state_save_interval,
 			data_paths=data_paths
@@ -73,6 +75,9 @@ class AtariRL:
 
 			t = 0
 			score = 0
+			ep_loss = 0
+			ep_acc = 0
+			replay_count = 0
 			# print(ts)
 			# print(self.logger.log_data)
 			# flag = False
@@ -104,8 +109,12 @@ class AtariRL:
 				agent.remember(curr_obs,action,reward,next_obs,done)
 				curr_obs = next_obs
 
-				agent.step_update(ts)
-				
+				hist = agent.step_update(ts)
+				if hist:
+					ep_loss += hist['loss'][0]
+					ep_acc += hist['acc'][0]
+					replay_count += 1
+
 				if done:
 					env.close()
 					break
@@ -113,7 +122,10 @@ class AtariRL:
 			# 	print('EP done')
 			# 	input()
 			agent.save_params()
-			self.logger.log_state(t,score)
+			if replay_count > 0:
+				ep_loss /= replay_count
+				ep_acc /= replay_count
+			self.logger.log_state(t,score,ep_loss,ep_acc)
 			self.plotter.plot_graph(self.logger.log_data)
 
 	def get_agent(self,game_name,mode,input_dims,action_space,args,data_paths=None):

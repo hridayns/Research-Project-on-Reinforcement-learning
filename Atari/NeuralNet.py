@@ -1,10 +1,10 @@
 from tensorflow.python.keras.models import Sequential,load_model
 from tensorflow.python.keras.layers import Dense,Conv2D,Flatten
 from tensorflow.python.keras.optimizers import RMSprop
-
+import tensorflow as tf
 
 class NeuralNet:
-	def __init__(self,input_dims,action_space):
+	def __init__(self,input_dims,action_space,learning_rate=0.00025):
 		self.model = Sequential()
 		self.model.add(Conv2D(
 				input_shape=input_dims,
@@ -43,15 +43,18 @@ class NeuralNet:
 		))
 
 		self.model.compile(
-			loss='mean_squared_error',
+			loss=self.huber_loss,
 			optimizer=RMSprop(
-				lr=0.00025,
+				lr=learning_rate,
 				rho=0.95,
 				epsilon=0.01
 			),
-			metrics=['accuracy']
+			metrics=['acc']
 		)
 
-		self.model.summary()
+	def huber_loss(self,y_true, y_pred):
+		return tf.losses.huber_loss(y_true,y_pred)
+
+		# self.model.summary()
 
 		# return self.model
