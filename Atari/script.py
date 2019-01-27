@@ -36,6 +36,8 @@ class AtariRL:
 				'high_scores_ts',
 				'low_scores_ep',
 				'low_scores_ts',
+				'avg_loss_ep',
+				'avg_acc_ep',
 				'timesteps_ep'
 			],
 			interval_types=[
@@ -125,7 +127,7 @@ class AtariRL:
 			if replay_count > 0:
 				ep_loss /= replay_count
 				ep_acc /= replay_count
-			self.logger.log_state(t,score)#,ep_loss,ep_acc)
+			self.logger.log_state(t,score,ep_loss,ep_acc)
 			self.plotter.plot_graph(self.logger.log_data)
 
 	def get_agent(self,game_name,mode,input_dims,action_space,args,data_paths=None):

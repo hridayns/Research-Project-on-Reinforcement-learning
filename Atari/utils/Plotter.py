@@ -1,12 +1,11 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 import h5py
 from collections import deque
 
 class Plotter:
-	def __init__(self,env_name,plot_types=['avg_scores_ep','avg_scores_ts','scores_ep','scores_ts','high_scores_ep','high_scores_ts','low_scores_ep','low_scores_ts','timesteps_ep'],interval_types=['overall','window'],plot_interval=100,data_paths=None):
+	def __init__(self,env_name,plot_types=['avg_scores_ep','avg_scores_ts','scores_ep','scores_ts','high_scores_ep','high_scores_ts','low_scores_ep','low_scores_ts','timesteps_ep','avg_loss_ep','avg_acc_ep'],interval_types=['overall','window'],plot_interval=100,data_paths=None):
 		self.env_name = env_name
 		self.plot_types = plot_types
 		self.plot_interval = plot_interval
@@ -22,6 +21,8 @@ class Plotter:
 			'avg_scores' : deque(),
 			'high_scores' : deque(),
 			'low_scores' : deque(),
+			'avg_losses' : deque(),
+			'avg_accs' : deque(),
 			'ts': deque(),
 			'tss': deque()
 		}
@@ -74,6 +75,18 @@ class Plotter:
 				'metric': 'low_scores',
 				'vs': 'timesteps'
 			},
+			'avg_loss_ep' : {
+				'xlabel': 'Epoch',
+				'ylabel': 'Avg Loss',
+				'metric': 'avg_losses',
+				'vs': 'epoch'
+			},
+			'avg_acc_ep' : {
+				'xlabel': 'Epoch',
+				'ylabel': 'Avg Accuracy',
+				'metric': 'avg_accs',
+				'vs': 'epoch'
+			},
 			'timesteps_ep' : {
 				'xlabel': 'Epoch',
 				'ylabel': 'Timesteps per episode',
@@ -110,6 +123,8 @@ class Plotter:
 		self.plot_data['avg_scores'].append(log_data['avg_score'])
 		self.plot_data['high_scores'].append(log_data['high_score'])
 		self.plot_data['low_scores'].append(log_data['low_score'])
+		self.plot_data['avg_losses'].append(log_data['avg_loss'])
+		self.plot_data['avg_accs'].append(log_data['avg_acc'])
 
 
 	def save_plot(self,x,y,xlabel,ylabel,plot_save_path):
@@ -130,7 +145,8 @@ class Plotter:
 				if pt in self.plot_data_dict:
 					xlabel = self.plot_data_dict[pt]['xlabel']
 					ylabel = self.plot_data_dict[pt]['ylabel']
-					y = np.asarray(self.plot_data[self.plot_data_dict[pt]['metric']])
+					metric = self.plot_data_dict[pt]['metric']
+					y = np.asarray(self.plot_data[metric])
 					vs = self.plot_data_dict[pt]['vs']
 					end = self.epoch+1
 					plot_save_folder = None
@@ -146,6 +162,10 @@ class Plotter:
 
 							if vs == 'epoch':
 								x = np.arange(start,end)
+								if metric == 'ts':
+									x = x[::5]
+									y = y[::5]
+
 							elif vs == 'timesteps':
 								x = np.asarray(self.plot_data['tss'])
 						else:
@@ -165,6 +185,7 @@ class Plotter:
 						if not os.path.exists(plot_save_folder):
 							os.makedirs(plot_save_folder)
 						plot_save_path = os.path.join(plot_save_folder,plot_name)
+
 						x_size = len(x)
 						y_size = len(y)
 
@@ -174,5 +195,6 @@ class Plotter:
 						else:
 							print('Mismatched sizes {} and  {} of x and y data...'.format(x_size,y_size))
 							print('Skipping {} type plot: {} vs {}...'.format(interval,xlabel,ylabel))
+
 
 			print('Finished drawing plots...')
