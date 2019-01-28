@@ -62,7 +62,7 @@ class AtariRL:
 			data_paths=data_paths
 		)
 
-		env = GymAtari.wrap(gym.make(env_name),4)
+		env = GymAtari.wrap(gym.make(env_name),stack_size=args.stack_size,episodic_life=args.episodic_life)
 		input_dims = env.reset().__array__().shape[1:]
 
 		agent = self.get_agent(game_name,mode,input_dims,env.action_space,args,data_paths=data_paths)
