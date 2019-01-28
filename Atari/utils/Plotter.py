@@ -5,7 +5,7 @@ import h5py
 from collections import deque
 
 class Plotter:
-	def __init__(self,env_name,plot_types=['avg_scores_ep','avg_scores_ts','scores_ep','scores_ts','high_scores_ep','high_scores_ts','low_scores_ep','low_scores_ts','timesteps_ep','avg_loss_ep','avg_acc_ep'],interval_types=['overall','window'],plot_interval=100,data_paths=None):
+	def __init__(self,env_name,plot_types=['avg_scores_ep','avg_scores_ts','avg_scores_100_ep','avg_scores_100_ts','scores_ep','scores_ts','high_scores_ep','high_scores_ts','low_scores_ep','low_scores_ts','timesteps_ep','avg_loss_ep','avg_acc_ep'],interval_types=['overall','window'],plot_interval=100,data_paths=None):
 		self.env_name = env_name
 		self.plot_types = plot_types
 		self.plot_interval = plot_interval
@@ -19,6 +19,7 @@ class Plotter:
 		self.plot_data = {
 			'scores': deque(),
 			'avg_scores' : deque(),
+			'avg_scores_100': deque(),
 			'high_scores' : deque(),
 			'low_scores' : deque(),
 			'avg_losses' : deque(),
@@ -37,6 +38,18 @@ class Plotter:
 				'xlabel': 'Timesteps',
 				'ylabel': 'Avg Score',
 				'metric': 'avg_scores',
+				'vs': 'timesteps'
+			},
+			'avg_scores_100_ep' : {
+				'xlabel': 'Epoch',
+				'ylabel': 'Avg Score for last 100 episodes',
+				'metric': 'avg_scores_100',
+				'vs': 'epoch'
+			},
+			'avg_scores_100_ts' : {
+				'xlabel': 'Timesteps',
+				'ylabel': 'Avg Score for last 100 episodes',
+				'metric': 'avg_scores_100',
 				'vs': 'timesteps'
 			},
 			'scores_ep' : {
@@ -121,6 +134,7 @@ class Plotter:
 		self.plot_data['tss'].append(log_data['ts'])
 		self.plot_data['scores'].append(log_data['score'])
 		self.plot_data['avg_scores'].append(log_data['avg_score'])
+		self.plot_data['avg_scores_100'].append(log_data['avg_score_100'])
 		self.plot_data['high_scores'].append(log_data['high_score'])
 		self.plot_data['low_scores'].append(log_data['low_score'])
 		self.plot_data['avg_losses'].append(log_data['avg_loss'])

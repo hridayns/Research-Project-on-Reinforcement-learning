@@ -1,6 +1,7 @@
 import os
 import numpy as np
-
+from collections import deque
+import h5py
 
 class Logger:
 	def __init__(self,env_name,log_types=['avg_score','highest_score','lowest_score','avg_loss','avg_acc'],save_interval=10,data_paths=None):
@@ -9,6 +10,7 @@ class Logger:
 		self.save_interval = save_interval
 
 		self.state_save_path = os.path.join(data_paths.root_path,'state.npz')
+		self.score_window_save_path = os.path.join(data_paths.root_path,'score_window.hdf5')
 
 		self.log_data = {
 			'epoch' : 0,
@@ -16,6 +18,7 @@ class Logger:
 			't': 0,
 			'score': 0,
 			'avg_score' : 0,
+			'avg_score_100': 0,
 			'high_score' : -1000,
 			'low_score' : 1000,
 			'loss': 0,
@@ -24,6 +27,7 @@ class Logger:
 			'avg_acc': 0
 		}
 
+		self.score_window = deque(maxlen=100)
 
 		self.load_state()
 
@@ -41,6 +45,7 @@ class Logger:
 			t=self.log_data['t'],
 			score=self.log_data['score'],
 			avg_score=self.log_data['avg_score'],
+			avg_score_100=self.log_data['avg_score_100'],
 			high_score=self.log_data['high_score'],
 			low_score=self.log_data['low_score'],
 			loss=self.log_data['loss'],
@@ -50,20 +55,32 @@ class Logger:
 		)
 		print('State Saved...')
 
+		with h5py.File(self.score_window_save_path,'w') as f:
+			dset = f.create_dataset('score_window',data=np.asarray(self.score_window))
+		print('Score Window saved...')
+
 	def load_state(self):
 		if os.path.isfile(self.state_save_path):
 			with np.load(self.state_save_path) as state:
 				for k in self.log_data:
 					self.log_data[k] = np.asscalar(state[k])
-
+			
 			print('State Loaded...')
-			print('Resuming from...')
-			self.show_state()
+
+		if os.path.isfile(self.score_window_save_path):
+			with h5py.File(self.score_window_save_path,'r') as f:
+				self.score_window = deque(f['score_window'])
+			
+			print('Score Window Loaded...')
+
+		print('Resuming from...')
+		self.show_state()
 
 	def show_state(self):
 		print('{:-^50}'.format('Episode ' + str(self.log_data['epoch'])))
 		print('Global Timesteps: {}'.format(self.log_data['ts']))
 		print('Score: {}'.format(self.log_data['score']))
+		print('Avg Score for last 100 episodes: {}'.format(self.log_data['avg_score_100']))
 		print('Loss: {}'.format(self.log_data['loss']))
 		print('Accuracy: {}'.format(self.log_data['acc']))
 		print('Timesteps per episode: {}'.format(self.log_data['t']))
@@ -91,6 +108,10 @@ class Logger:
 		self.log_data['loss'] = loss
 		self.log_data['acc'] = acc
 		self.log_data['t'] = t
+
+		self.score_window.append(score)
+		self.log_data['avg_score_100'] = np.mean(self.score_window)
+
 		self.log_data['avg_loss'] = (self.log_data['avg_loss'] * (self.log_data['epoch']-1) + self.log_data['loss']) / self.log_data['epoch']
 		self.log_data['avg_acc'] = (self.log_data['avg_acc'] * (self.log_data['epoch']-1) + self.log_data['acc']) / self.log_data['epoch']
 		self.log_data['avg_score'] = (self.log_data['avg_score'] * (self.log_data['epoch']-1) + self.log_data['score']) / self.log_data['epoch']

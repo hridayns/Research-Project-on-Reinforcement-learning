@@ -30,6 +30,8 @@ class AtariRL:
 			plot_types=[
 				'avg_scores_ep',
 				'avg_scores_ts',
+				'avg_scores_100_ep',
+				'avg_scores_100_ts',
 				'scores_ep',
 				'scores_ts',
 				'high_scores_ep',
@@ -80,12 +82,7 @@ class AtariRL:
 			ep_loss = 0
 			ep_acc = 0
 			replay_count = 0
-			# print(ts)
-			# print(self.logger.log_data)
-			# flag = False
-			# if self.logger.log_data['epoch'] == 1:
-				# flag = True
-			# input()
+
 			while True:
 				if ts >= total_step_lim:
 					print('Total Step limit of {} Global timesteps reached'.format(total_step_lim))
@@ -120,9 +117,7 @@ class AtariRL:
 				if done:
 					env.close()
 					break
-			# if flag:
-			# 	print('EP done')
-			# 	input()
+
 			agent.save_params()
 			if replay_count > 0:
 				ep_loss /= replay_count

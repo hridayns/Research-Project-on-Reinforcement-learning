@@ -1,16 +1,15 @@
 #Internal imports
 from game_model.base import BaseGameModel
 from NeuralNet import NeuralNet
+from utils.ReplayBuffer import ReplayBuffer
 
 #External imports
 import os
 import h5py
-import pickle
+# import pickle
 import numpy as np
-from sys import getsizeof
-from random import sample
-from collections import deque
-from timeit import default_timer as timer
+# from sys import getsizeof
+# from timeit import default_timer as timer
 
 EXPLORATION_TEST = 0.02
 EXPLORATION_STEPS = 850000
@@ -73,14 +72,16 @@ class DDQNLearner(DDQNGameModel):
 		self.replay_start_size = replay_start_size
 		self.training_freq = train_freq
 		self.replay_buffer_size = mem_size
-		self.memory = deque(maxlen=self.replay_buffer_size)
+		# self.memory = deque(maxlen=self.replay_buffer_size)
+		self.memory = ReplayBuffer(max_size=self.replay_buffer_size,obs_shape=input_dims,data_paths=data_paths)
+
+		# self.memory.show_replay_buffer()
 
 		self.params_save_path = os.path.join(self.model_path,'params.npz')
-		self.replay_buffer_save_path = os.path.join(self.model_path,'replay-buffer.pickle')
+		# self.replay_buffer_save_path = os.path.join(self.model_path,'replay-buffer.pickle')
 
 		self.drive = data_paths.drive
-		if self.drive:
-			self.load_replay_buffer()
+
 		self.load_params()
 
 		self.show_hyperparams()
@@ -93,7 +94,7 @@ class DDQNLearner(DDQNGameModel):
 		print('Model Save Frequency: {}'.format(self.model_save_freq))
 		print('Target network update Frequency: {}'.format(self.target_network_update_freq))
 		print('Replay start size: {}'.format(self.replay_start_size))
-
+	'''
 	def load_replay_buffer(self):
 		self.show_saved_replay_buffer_size()
 		start = timer()
@@ -116,7 +117,7 @@ class DDQNLearner(DDQNGameModel):
 			print('Checkpoint replay buffer saved...')
 		end = timer()
 		print('Time taken: {} seconds'.format(end-start))
-
+	'''
 	def save_params(self):
 		np.savez(self.params_save_path,epsilon=self.epsilon)
 		print('Saved params...')
@@ -126,24 +127,27 @@ class DDQNLearner(DDQNGameModel):
 			with np.load(self.params_save_path) as data:
 				self.epsilon = data['epsilon']
 				print('Loaded params...')
-
+	'''
 	def show_saved_replay_buffer_size(self):
 		mb_factor = (1024 * 1024)
 		if os.path.isfile(self.replay_buffer_save_path):
 			print('size of file: {} MB'.format(os.path.getsize(self.replay_buffer_save_path)/mb_factor))
-
+	'''
 	def act(self,obs):
-		if np.random.rand() < self.epsilon or len(self.memory) < self.replay_start_size:
+		if np.random.rand() < self.epsilon or self.memory.fill_size < self.replay_start_size:
 			return self.action_space.sample()
 		q_vals = self.local_model.predict(obs,batch_size=1)
 		return np.argmax(q_vals[0])
-
+	'''
 	def remember(self,curr_obs,action,reward,next_obs,done):
 		self.memory.append([curr_obs,action,reward,next_obs,done])
+	'''
+	def remember(self,curr_obs,action,reward,next_obs,done):
+		self.memory.add(curr_obs,action,reward,next_obs,done)
 
 	def step_update(self,tot_step):
 		hist = None
-		if len(self.memory) < self.replay_start_size:
+		if self.memory.fill_size < self.replay_start_size:
 			return hist
 
 		if tot_step % self.training_freq == 0:
@@ -154,14 +158,46 @@ class DDQNLearner(DDQNGameModel):
 		if tot_step % self.model_save_freq == 0:
 			self.save_models()
 			if self.drive:
-				self.save_replay_buffer()
-
+				self.memory.save()
+			self.memory.save()
+			
 		if tot_step % self.target_network_update_freq == 0:
 			self.reset_target_network()
 		
 		return hist
 
+	def replay(self):
+		if self.memory.fill_size < self.batch_size:#self.batch_size:
+			return
+		curr_obs,action,reward,next_obs,done = self.memory.get_minibatch(self.batch_size)
+		
+		target = self.local_model.predict(curr_obs,batch_size=self.batch_size)
 
+		# print('before: {}'.format(target))
+
+		done_mask = done.ravel()
+		undone_mask = np.invert(done).ravel()
+
+		target[done_mask,action[done_mask].ravel()] = reward[done_mask].ravel()
+
+		Q_target = self.target_model.predict(next_obs,batch_size=self.batch_size)
+		Q_future = np.max(Q_target[undone_mask],axis=1)
+
+		target[undone_mask,action[undone_mask].ravel()] = reward[undone_mask].ravel() + self.gamma * Q_future
+		# print('after: {}'.format(target))
+
+		fit = self.local_model.fit(curr_obs, target, batch_size=self.batch_size, verbose=0).history
+		# print(fit)
+		return fit
+
+	def update_epsilon(self):
+		self.epsilon = max(self.epsilon_min,self.epsilon - self.epsilon_decay)
+
+	def reset_target_network(self):
+		self.target_model.set_weights(self.local_model.get_weights())
+		print('Target Network Reset...')
+
+	'''
 	def replay(self):
 		if len(self.memory) < self.batch_size:
 			return
@@ -186,10 +222,4 @@ class DDQNLearner(DDQNGameModel):
 
 		fit = self.local_model.fit(update_input, update_target, batch_size=self.batch_size, verbose=0).history
 		return fit
-
-	def update_epsilon(self):
-		self.epsilon = max(self.epsilon_min,self.epsilon - self.epsilon_decay)
-
-	def reset_target_network(self):
-		self.target_model.set_weights(self.local_model.get_weights())
-		print('Target Network Reset...')
+	'''
