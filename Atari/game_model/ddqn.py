@@ -99,7 +99,7 @@ class DDQNLearner(DDQNGameModel):
 				print('Loaded params...')
 
 	def act(self,obs):
-		if np.random.rand() < self.epsilon or self.memory.fill_size < self.replay_start_size:
+		if np.random.rand() < self.epsilon or self.memory.meta_data['fill_size'] < self.replay_start_size:
 			return self.action_space.sample()
 		q_vals = self.local_model.predict(obs,batch_size=1)
 		return np.argmax(q_vals[0])
@@ -109,7 +109,7 @@ class DDQNLearner(DDQNGameModel):
 
 	def step_update(self,tot_step):
 		hist = None
-		if self.memory.fill_size < self.replay_start_size:
+		if self.memory.meta_data['fill_size'] < self.replay_start_size:
 			return hist
 
 		if tot_step % self.training_freq == 0:
@@ -128,7 +128,7 @@ class DDQNLearner(DDQNGameModel):
 		return hist
 
 	def replay(self):
-		if self.memory.fill_size < self.batch_size:
+		if self.memory.meta_data['fill_size'] < self.batch_size:
 			return
 		curr_obs,action,reward,next_obs,done = self.memory.get_minibatch(self.batch_size)
 		
