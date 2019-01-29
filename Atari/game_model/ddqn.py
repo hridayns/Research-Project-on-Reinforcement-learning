@@ -6,10 +6,7 @@ from utils.ReplayBuffer import ReplayBuffer
 #External imports
 import os
 import h5py
-# import pickle
 import numpy as np
-# from sys import getsizeof
-# from timeit import default_timer as timer
 
 EXPLORATION_TEST = 0.02
 EXPLORATION_STEPS = 850000
@@ -72,13 +69,9 @@ class DDQNLearner(DDQNGameModel):
 		self.replay_start_size = replay_start_size
 		self.training_freq = train_freq
 		self.replay_buffer_size = mem_size
-		# self.memory = deque(maxlen=self.replay_buffer_size)
 		self.memory = ReplayBuffer(max_size=self.replay_buffer_size,obs_shape=input_dims,data_paths=data_paths)
 
-		# self.memory.show_replay_buffer()
-
 		self.params_save_path = os.path.join(self.model_path,'params.npz')
-		# self.replay_buffer_save_path = os.path.join(self.model_path,'replay-buffer.pickle')
 
 		self.drive = data_paths.drive
 
@@ -94,30 +87,7 @@ class DDQNLearner(DDQNGameModel):
 		print('Model Save Frequency: {}'.format(self.model_save_freq))
 		print('Target network update Frequency: {}'.format(self.target_network_update_freq))
 		print('Replay start size: {}'.format(self.replay_start_size))
-	'''
-	def load_replay_buffer(self):
-		self.show_saved_replay_buffer_size()
-		start = timer()
-		if os.path.isfile(self.replay_buffer_save_path):
-			# with h5py.File(self.replay_buffer_save_path,'r') as f:
-			# 	self.memory = deque(f['replay_buffer'])
-			with open(self.replay_buffer_save_path,'rb') as handle:
-				self.memory = pickle.load(handle)
-				print('Replay Buffer loaded...')
-		end = timer()
-		print('Time taken: {} seconds'.format(end-start))
 
-	def save_replay_buffer(self):
-		self.show_saved_replay_buffer_size()
-		start = timer()
-		# with h5py.File(self.replay_buffer_save_path,'w') as f:
-		# 	dset = f.create_dataset('replay_buffer',data=np.asarray(self.memory))
-		with open(self.replay_buffer_save_path,'wb') as handle:
-			pickle.dump(self.memory,handle,protocol=pickle.HIGHEST_PROTOCOL)
-			print('Checkpoint replay buffer saved...')
-		end = timer()
-		print('Time taken: {} seconds'.format(end-start))
-	'''
 	def save_params(self):
 		np.savez(self.params_save_path,epsilon=self.epsilon)
 		print('Saved params...')
@@ -127,21 +97,13 @@ class DDQNLearner(DDQNGameModel):
 			with np.load(self.params_save_path) as data:
 				self.epsilon = data['epsilon']
 				print('Loaded params...')
-	'''
-	def show_saved_replay_buffer_size(self):
-		mb_factor = (1024 * 1024)
-		if os.path.isfile(self.replay_buffer_save_path):
-			print('size of file: {} MB'.format(os.path.getsize(self.replay_buffer_save_path)/mb_factor))
-	'''
+
 	def act(self,obs):
 		if np.random.rand() < self.epsilon or self.memory.fill_size < self.replay_start_size:
 			return self.action_space.sample()
 		q_vals = self.local_model.predict(obs,batch_size=1)
 		return np.argmax(q_vals[0])
-	'''
-	def remember(self,curr_obs,action,reward,next_obs,done):
-		self.memory.append([curr_obs,action,reward,next_obs,done])
-	'''
+
 	def remember(self,curr_obs,action,reward,next_obs,done):
 		self.memory.add(curr_obs,action,reward,next_obs,done)
 
@@ -159,7 +121,6 @@ class DDQNLearner(DDQNGameModel):
 			self.save_models()
 			if self.drive:
 				self.memory.save()
-			self.memory.save()
 			
 		if tot_step % self.target_network_update_freq == 0:
 			self.reset_target_network()
@@ -167,13 +128,11 @@ class DDQNLearner(DDQNGameModel):
 		return hist
 
 	def replay(self):
-		if self.memory.fill_size < self.batch_size:#self.batch_size:
+		if self.memory.fill_size < self.batch_size:
 			return
 		curr_obs,action,reward,next_obs,done = self.memory.get_minibatch(self.batch_size)
 		
 		target = self.local_model.predict(curr_obs,batch_size=self.batch_size)
-
-		# print('before: {}'.format(target))
 
 		done_mask = done.ravel()
 		undone_mask = np.invert(done).ravel()
@@ -184,10 +143,8 @@ class DDQNLearner(DDQNGameModel):
 		Q_future = np.max(Q_target[undone_mask],axis=1)
 
 		target[undone_mask,action[undone_mask].ravel()] = reward[undone_mask].ravel() + self.gamma * Q_future
-		# print('after: {}'.format(target))
 
 		fit = self.local_model.fit(curr_obs, target, batch_size=self.batch_size, verbose=0).history
-		# print(fit)
 		return fit
 
 	def update_epsilon(self):
