@@ -35,11 +35,12 @@ class ReplayBuffer:
 
 
 	def add(self,curr_obs,action,reward,next_obs,done):
-		self.data['curr_obs'][self.buffer_ptr] = curr_obs
-		self.data['action'][self.buffer_ptr] = action
-		self.data['reward'][self.buffer_ptr] = reward
-		self.data['next_obs'][self.buffer_ptr] = next_obs
-		self.data['done'][self.buffer_ptr] = done
+		idx = self.meta_data['buffer_ptr']
+		self.data['curr_obs'][idx] = curr_obs
+		self.data['action'][idx] = action
+		self.data['reward'][idx] = reward
+		self.data['next_obs'][idx] = next_obs
+		self.data['done'][idx] = done
 		# self.curr_obs[self.buffer_ptr] = curr_obs
 		# self.action[self.buffer_ptr] = action
 		# self.reward[self.buffer_ptr] = reward
@@ -53,7 +54,7 @@ class ReplayBuffer:
 		# self.buffer_ptr = self.buffer_ptr % self.max_size
 
 	def get_minibatch(self,batch_size=32):
-		sample_idx = np.random.choice(self.fill_size,batch_size,replace=False)
+		sample_idx = np.random.choice(self.meta_data['fill_size'],batch_size,replace=False)
 		curr_obs_batch = self.data['curr_obs'][sample_idx,...]
 		action_batch = self.data['action'][sample_idx,...]
 		reward_batch = self.data['reward'][sample_idx,...]
@@ -123,10 +124,7 @@ class ReplayBuffer:
 		print('RAM usage: {} GB'.format(py.memory_info()[0]/2. ** 30))
 
 	def show_replay_buffer(self):
-		print(self.curr_obs.shape)
-		print(self.next_obs.shape)
-		print(self.action.shape)
-		print(self.reward.shape)
-		print(self.done.shape)
+		for k in self.data.keys():
+			print('{}: {}'.format(k,self.data[k].shape))
 		input()
 
