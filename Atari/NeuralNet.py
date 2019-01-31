@@ -1,6 +1,6 @@
 from tensorflow.python.keras.models import Sequential,load_model
 from tensorflow.python.keras.layers import Dense,Conv2D,Flatten
-from tensorflow.python.keras.optimizers import RMSprop
+from tensorflow.python.keras.optimizers import RMSprop,Adam
 import tensorflow as tf
 
 class NeuralNet:
@@ -25,7 +25,7 @@ class NeuralNet:
 
 		self.model.add(Conv2D(
 				filters=64,
-				kernel_size=(2,2),
+				kernel_size=(3,3),
 				strides=(1,1),
 				padding='valid',
 				activation='relu'
@@ -44,10 +44,10 @@ class NeuralNet:
 
 		self.model.compile(
 			loss=self.huber_loss,
-			optimizer=RMSprop(
-				lr=learning_rate,
-				rho=0.95,
-				epsilon=0.01
+			optimizer=Adam(
+				lr=learning_rate
+				# rho=0.95,
+				# epsilon=0.01
 			),
 			metrics=['acc']
 		)

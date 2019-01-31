@@ -1,6 +1,7 @@
 # Internal Imports
 from utils import arg_parser
 from utils.AtariWrapper import GymAtari
+from utils.AtariWrapperNew import make_atari,wrap_deepmind
 from utils.DataPaths import DataPaths
 from utils.Logger import Logger
 from utils.Plotter import Plotter
@@ -62,7 +63,10 @@ class AtariRL:
 			data_paths=data_paths
 		)
 
-		env = GymAtari.wrap(gym.make(env_name),stack_size=args.stack_size,episodic_life=args.episodic_life)
+		# env = GymAtari.wrap(gym.make(env_name),stack_size=args.stack_size,episodic_life=args.episodic_life)
+		env = make_atari(env_name)
+		env = wrap_deepmind(env, frame_stack=True, scale=False)
+		
 		input_dims = env.reset().__array__().shape[1:]
 
 		agent = self.get_agent(game_name,mode,input_dims,env.action_space,args,data_paths=data_paths)

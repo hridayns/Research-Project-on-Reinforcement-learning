@@ -101,7 +101,7 @@ class DDQNLearner(DDQNGameModel):
 	def act(self,obs):
 		if np.random.rand() < self.epsilon or self.memory.meta_data['fill_size'] < self.replay_start_size:
 			return self.action_space.sample()
-		q_vals = self.local_model.predict(obs,batch_size=1)
+		q_vals = self.local_model.predict(np.expand_dims(obs,axis=0),batch_size=1)
 		return np.argmax(q_vals[0])
 
 	def remember(self,curr_obs,action,reward,next_obs,done):
@@ -115,7 +115,8 @@ class DDQNLearner(DDQNGameModel):
 		if tot_step % self.training_freq == 0:
 			hist = self.replay()
 
-		self.update_epsilon()
+		# self.update_epsilon()
+		self.update_epsilon(tot_step)
 
 		if tot_step % self.model_save_freq == 0:
 			self.save_models()
@@ -132,23 +133,28 @@ class DDQNLearner(DDQNGameModel):
 			return
 		curr_obs,action,reward,next_obs,done = self.memory.get_minibatch(self.batch_size)
 		
-		target = self.local_model.predict(curr_obs,batch_size=self.batch_size)
+		target = self.local_model.predict(curr_obs.astype(float)/255,batch_size=self.batch_size)
 
 		done_mask = done.ravel()
 		undone_mask = np.invert(done).ravel()
 
 		target[done_mask,action[done_mask].ravel()] = reward[done_mask].ravel()
 
-		Q_target = self.target_model.predict(next_obs,batch_size=self.batch_size)
+		Q_target = self.target_model.predict(next_obs.astype(float)/255,batch_size=self.batch_size)
 		Q_future = np.max(Q_target[undone_mask],axis=1)
 
 		target[undone_mask,action[undone_mask].ravel()] = reward[undone_mask].ravel() + self.gamma * Q_future
 
-		fit = self.local_model.fit(curr_obs, target, batch_size=self.batch_size, verbose=0).history
+		fit = self.local_model.fit(curr_obs.astype(float)/255, target, batch_size=self.batch_size, verbose=0).history
 		return fit
 
 	def update_epsilon(self):
 		self.epsilon = max(self.epsilon_min,self.epsilon - self.epsilon_decay)
+
+	def update_epsilon1(self,t):
+		tot_step_lim_fract = 1e6
+		fract = min(float(t) / tot_step_lim_fract, 1.0)
+		self.epsilon = max(self.epsilon_min,self.epsilon * fract)
 
 	def reset_target_network(self):
 		self.target_model.set_weights(self.local_model.get_weights())
