@@ -20,7 +20,7 @@ class AtariRL:
 
 		game_name = args.game_name
 		mode = args.mode
-		env_name = game_name + 'Deterministic-v4'
+		env_name = game_name + 'NoFrameskip-v4'
 
 		data_paths = DataPaths(
 			env_name=game_name,
