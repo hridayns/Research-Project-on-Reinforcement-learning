@@ -76,9 +76,13 @@ ep_acc = 0
 for t in range(args.total_step_lim):
 
 	if args.render:
-		if logger.data['episode'] % args.render_freq == 0:
+		if args.mode == 'test':
 			env.render()
 			sleep(0.01)
+		else:
+			if logger.data['episode'] % args.render_freq == 0:
+				env.render()
+				sleep(0.01)
 
 	action = agent.act(obs)#env.action_space.sample()
 	agent.update_exploration(t)
