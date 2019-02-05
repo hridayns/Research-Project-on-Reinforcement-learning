@@ -5,15 +5,14 @@ import h5py
 from collections import deque
 
 class Plotter:
-	def __init__(self,env_name,plot_types=['avg_scores_ep','avg_scores_ts','avg_scores_100_ep','avg_scores_100_ts','scores_ep','scores_ts','high_scores_ep','high_scores_ts','low_scores_ep','low_scores_ts','timesteps_ep','avg_loss_ep','avg_acc_ep'],interval_types=['overall','window'],plot_interval=100,data_paths=None):
-		self.env_name = env_name
+	def __init__(self,save_dirs,plot_types=['avg_scores_ep','avg_scores_ts','avg_scores_100_ep','avg_scores_100_ts','scores_ep','scores_ts','high_scores_ep','high_scores_ts','low_scores_ep','low_scores_ts','timesteps_ep','avg_loss_ep','avg_acc_ep'],interval_types=['overall','window'],plot_freq=10,mode='train'):
 		self.plot_types = plot_types
-		self.plot_interval = plot_interval
+		self.plot_freq = plot_freq
 
-		self.plots_save_folder = data_paths.save_folders['plot']
-		self.plot_data_save_path = os.path.join(data_paths.save_folders['plot_data'],'plot_data.hdf5')
+		self.plot_save_path = save_dirs['plots']
+		self.plot_data_save_path = os.path.join(save_dirs['plot_data'],'plot_data.hdf5')
 
-		self.epoch = 0
+		self.episode = 0
 		self.interval_types = interval_types
 
 		self.plot_data = {
@@ -29,10 +28,10 @@ class Plotter:
 		}
 		self.plot_data_dict = {
 			'avg_scores_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Avg Score',
 				'metric': 'avg_scores',
-				'vs': 'epoch'
+				'vs': 'episode'
 			},
 			'avg_scores_ts' : {
 				'xlabel': 'Timesteps',
@@ -41,10 +40,10 @@ class Plotter:
 				'vs': 'timesteps'
 			},
 			'avg_scores_100_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Avg Score for last 100 episodes',
 				'metric': 'avg_scores_100',
-				'vs': 'epoch'
+				'vs': 'episode'
 			},
 			'avg_scores_100_ts' : {
 				'xlabel': 'Timesteps',
@@ -53,10 +52,10 @@ class Plotter:
 				'vs': 'timesteps'
 			},
 			'scores_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Score',
 				'metric': 'scores',
-				'vs': 'epoch'
+				'vs': 'episode'
 			},
 			'scores_ts' : {
 				'xlabel': 'Timesteps',
@@ -65,10 +64,10 @@ class Plotter:
 				'vs': 'timesteps'
 			},
 			'high_scores_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Highest Score',
 				'metric': 'high_scores',
-				'vs': 'epoch'
+				'vs': 'episode'
 			},
 			'high_scores_ts' : {
 				'xlabel': 'Timesteps',
@@ -77,10 +76,10 @@ class Plotter:
 				'vs': 'timesteps'
 			},
 			'low_scores_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Lowest Score',
 				'metric': 'low_scores',
-				'vs': 'epoch'
+				'vs': 'episode'
 			},
 			'low_scores_ts' : {
 				'xlabel': 'Timesteps',
@@ -89,31 +88,32 @@ class Plotter:
 				'vs': 'timesteps'
 			},
 			'avg_loss_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Avg Loss',
 				'metric': 'avg_losses',
-				'vs': 'epoch'
+				'vs': 'episode'
 			},
 			'avg_acc_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Avg Accuracy',
 				'metric': 'avg_accs',
-				'vs': 'epoch'
+				'vs': 'episode'
 			},
 			'timesteps_ep' : {
-				'xlabel': 'Epoch',
+				'xlabel': 'Episode',
 				'ylabel': 'Timesteps per episode',
 				'metric': 'ts',
-				'vs': 'epoch'
+				'vs': 'episode'
 			}
 		}
 
-		self.load_plot_data()
+		if mode == 'train':
+			self.load_plot_data()
 
 	def save_plot_data(self):
 		with h5py.File(self.plot_data_save_path,'w') as f:
 			for k in self.plot_data:
-				dset = f.create_dataset(k,data=np.asarray(self.plot_data[k]))
+				dset = f.create_dataset(k,data=np.array(self.plot_data[k]))
 			print('Plot Data Saved...')
 		
 	def load_plot_data(self):
@@ -129,9 +129,9 @@ class Plotter:
 			print('No existing plot data found...')
 
 	def update_plot_data(self,log_data):
-		self.epoch = log_data['epoch']
-		self.plot_data['ts'].append(log_data['t'])
-		self.plot_data['tss'].append(log_data['ts'])
+		self.episode = log_data['episode']
+		self.plot_data['ts'].append(log_data['ep_steps'])
+		self.plot_data['tss'].append(log_data['timesteps'])
 		self.plot_data['scores'].append(log_data['score'])
 		self.plot_data['avg_scores'].append(log_data['avg_score'])
 		self.plot_data['avg_scores_100'].append(log_data['avg_score_100'])
@@ -143,7 +143,7 @@ class Plotter:
 
 	def save_plot(self,x,y,xlabel,ylabel,plot_save_path):
 		plt.figure()
-		plt.plot(x,y,'bo-',markevery=self.plot_interval/5)
+		plt.plot(x,y,'bo-',markevery=self.plot_freq/5)
 		plt.xlabel(xlabel)
 		plt.ylabel(ylabel)
 		plt.savefig(plot_save_path,bbox_inches='tight')
@@ -152,7 +152,9 @@ class Plotter:
 	def plot_graph(self,log_data):
 		self.update_plot_data(log_data)
 		# return
-		if self.epoch % self.plot_interval == 0:
+		# print(self.episode)
+		# input()
+		if self.episode % self.plot_freq == 0:
 			self.save_plot_data()
 			print('Drawing plots...')
 			for pt in self.plot_types:
@@ -160,38 +162,38 @@ class Plotter:
 					xlabel = self.plot_data_dict[pt]['xlabel']
 					ylabel = self.plot_data_dict[pt]['ylabel']
 					metric = self.plot_data_dict[pt]['metric']
-					y = np.asarray(self.plot_data[metric])
+					y = np.array(self.plot_data[metric])
 					vs = self.plot_data_dict[pt]['vs']
-					end = self.epoch+1
+					end = self.episode+1
 					plot_save_folder = None
 					plot_name = ''
 					x = None
 
 					for interval in self.interval_types:
-						plot_save_folder = os.path.join(self.plots_save_folder,*[interval,ylabel])
+						plot_save_folder = os.path.join(self.plot_save_path,*[interval,ylabel])
 						
 						if interval == 'overall':
 							start = 1
 							plot_name = xlabel
 
-							if vs == 'epoch':
+							if vs == 'episode':
 								x = np.arange(start,end)
 								if metric == 'ts':
 									x = x[::5]
 									y = y[::5]
 
 							elif vs == 'timesteps':
-								x = np.asarray(self.plot_data['tss'])
+								x = np.array(self.plot_data['tss'])
 						else:
-							start = self.epoch-(self.plot_interval-1)
+							start = self.episode-(self.plot_freq-1)
 							plot_name = xlabel + '_'
 							plot_save_folder = os.path.join(plot_save_folder,vs)
 							y = y[start-1:end]
-							if vs == 'epoch':
+							if vs == 'episode':
 								x = np.arange(start,end)
 								plot_name += str(start) + '-' + str(end)
 							elif vs == 'timesteps':
-								x = np.asarray(self.plot_data['tss'])
+								x = np.array(self.plot_data['tss'])
 								x = x[start-1:end]
 								plot_name += str(x[0]) + '-' + str(x[-1])
 
