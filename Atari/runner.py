@@ -65,7 +65,7 @@ else:
 
 
 saved_mean_reward = None
-obs = env.reset().__array__()
+obs = env.reset().__array__(dtype=np.uint8)
 
 reset = True
 score = 0
@@ -88,7 +88,7 @@ for t in range(args.total_step_lim):
 	agent.update_exploration(t)
 	reset = False
 	new_obs, rew, done, _ = env.step(action)
-	new_obs = new_obs.__array__()
+	new_obs = new_obs.__array__(dtype=np.uint8)
 	agent.remember(obs,action,rew,new_obs,done)
 	obs = new_obs
 
@@ -96,7 +96,7 @@ for t in range(args.total_step_lim):
 	ep_steps += 1
 
 	if done:
-		obs = env.reset()
+		obs = env.reset().__array__(dtype=np.uint8)
 		if args.render:
 			env.close()
 
