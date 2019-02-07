@@ -103,7 +103,7 @@ class DDQNLearner(DDQN):
 	def act(self,obs):
 		if np.random.rand() < self.epsilon:
 			return self.env.action_space.sample()
-		q_vals = self.local_model.predict(np.expand_dims(obs,axis=0),batch_size=1)
+		q_vals = self.local_model.predict(np.expand_dims(obs,axis=0).astype(float)/255,batch_size=1)
 		return np.argmax(q_vals[0])
 
 	def learn(self):
@@ -188,5 +188,5 @@ class DDQNPlayer(DDQN):
 	def act(self,obs):
 		if np.random.rand() < self.epsilon_test:
 			return self.env.action_space.sample()
-		q_vals = self.local_model.predict(np.expand_dims(obs,axis=0),batch_size=1)
+		q_vals = self.local_model.predict(np.expand_dims(obs,axis=0).astype(float)/255,batch_size=1)
 		return np.argmax(q_vals[0])
