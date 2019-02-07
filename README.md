@@ -1,3 +1,3 @@
-# Reinforcement Learning
+# Undergraduate Thesis - Reinforcement Learning (Ongoing)
 
-This repo contains work on Reinforcement Learning problems.
+This repo contains work on Reinforcement Learning problems part of my final year project.
