@@ -1,4 +1,4 @@
-#  Thesis - Reinforcement Learning
+#  Research Thesis - Reinforcement Learning
 
 - Awarded *Best Paper* for research thesis titled **Damped Sinusoidal Exploration Decay Schedule to improve Deep Q-Networks-based agent performance**.
 - As sole student author, proposed a novel damped sinusoidal equation to perform exploration decay instead of linear epsilon decay by a constant factor to optimize DQN-based reinforcement learning agents in sparse-reward environments. Utilized the Google Colab virtual machine powered by a NVIDIA Tesla K80 GPU and 13 GB RAM to process terabytes of data over 3500 episodes in over 16 training cycles each lasting up to 48 hrs.
