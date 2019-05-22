@@ -22,10 +22,10 @@ ENV_NAME = 'MountainCar-v0'
 SAVE_FOLDER = os.path.join(os.getcwd(),'model-saves')
 if not os.path.exists(SAVE_FOLDER):
     os.mkdir(SAVE_FOLDER)
-LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights1.h5')
-TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights1.h5')
-TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-chkpt1.npz')
-REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-replay-buffer1.pickle')
+LOCAL_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-local-weights.h5')
+TARGET_WEIGHTS_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-target-weights.h5')
+TRAIN_CHKPT_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-chkpt.npz')
+REPLAY_BUFFER_SAVE = os.path.join(SAVE_FOLDER,ENV_NAME + '-DQN-replay-buffer.pickle')
 
 EPISODES = 2000
 render = False
@@ -173,15 +173,16 @@ def test():
     env = gym.make(ENV_NAME)
     trained_agent = DQN(env=env)
     trained_agent.load_model()
-    env = trained_agent.env.env
-    ts = datetime.fromtimestamp(time()).strftime('%d-%m-%Y %HH %MM %SS')
-    env = Monitor(env, './test_runs/' + ENV_NAME + '-' + ts + '/')
+    env = trained_agent.env
+    # ts = datetime.fromtimestamp(time()).strftime('%d-%m-%Y %HH %MM %SS')
+    # env = Monitor(env, './test_runs/' + ENV_NAME + '-' + ts + '/')
     curr_obs = env.reset()
     curr_obs = reshape_input(curr_obs)
     steps = 0
     while True:
         env.render()
-        action = trained_agent.perform(curr_obs)
+        # action = trained_agent.perform(curr_obs)
+        action = env.action_space.sample()
         next_obs, reward, done, _ = env.step(action)
         next_obs = reshape_input(next_obs)
         curr_obs = next_obs

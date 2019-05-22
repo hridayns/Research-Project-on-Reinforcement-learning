@@ -3,7 +3,9 @@
 *.h5
 *.hdf5
 *.pickle
+*.zip
 __pycache__/
 test_runs/
+research-plots/
 experimental/
 data/

@@ -27,6 +27,8 @@ def parse_args():
 	parser.add_argument('--epsilon_test',help='Exploration factor for test environment. Default is 0.02.',type=float,default=0.02)
 	# parser.add_argument('-c','--clip',help='Clip rewards to scale?',action='store_true')
 
+	parser.add_argument('--research',help='Developer argument for generating research plots',action='store_true')
+
 	args = parser.parse_args()
 	return args
 

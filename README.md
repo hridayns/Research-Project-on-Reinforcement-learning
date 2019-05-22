@@ -1,3 +1,5 @@
-# Undergraduate Thesis - Reinforcement Learning (Ongoing)
+# Undergraduate Thesis - Reinforcement Learning
 
-This repo contains work on Reinforcement Learning problems part of my final year project.
+The code for the results of paper titled **Damped Sinusoidal Exploration Decay Schedule to improve Deep Q-Networks-based agent performance** is available in the *research* folder.
+
+The *Atari* and *Classic Control* folders contain the project code before the research component.

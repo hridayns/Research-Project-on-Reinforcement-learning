@@ -232,22 +232,25 @@ def reshape_input(X):
 
 def play_game(agent):
 	agent.load_model()
-	env = agent.env.env
-	ts = datetime.fromtimestamp(time()).strftime('%d-%m-%Y %HH %MM %SS')
-	env = Monitor(env, './test_runs/' + ENV_NAME + '-' + ts + '/')
+	env = agent.env
+	env._max_episode_steps = 1000
+	# ts = datetime.fromtimestamp(time()).strftime('%d-%m-%Y %HH %MM %SS')
+	# env = Monitor(env, './test_runs/' + ENV_NAME + '-' + ts + '/')
 	curr_obs = env.reset()
 	curr_obs = reshape_input(curr_obs)
 	total_r = 0
-	while True:
+	# while True:
+	for i in range(1000):
 		env.render()
-		action = agent.perform_action(curr_obs)
+		# action = agent.perform_action(curr_obs)
+		action = env.action_space.sample()
 		next_obs,reward,done,info = env.step(action)
 		next_obs = reshape_input(next_obs)
 		total_r += reward
 
 		curr_obs = next_obs
-		if done:
-			break
+		# if done:
+			# break
 	print('Reward: ',total_r)
 
 def run(train):

@@ -84,8 +84,9 @@ for t in range(args.total_step_lim):
 				env.render()
 				sleep(0.01)
 
-	action = agent.act(obs)#env.action_space.sample()
-	agent.update_exploration(t)
+	# action = agent.act(obs)
+	action = env.action_space.sample()
+	# agent.update_exploration(t)
 	reset = False
 	new_obs, rew, done, _ = env.step(action)
 	new_obs = new_obs.__array__(dtype=np.uint8)
